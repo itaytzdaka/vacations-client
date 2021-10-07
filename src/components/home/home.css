@@ -1,0 +1,15 @@
+.vacation{
+    display: inline-block;
+    border: solid black 3px;
+    margin: 5px;
+}
+
+.cardContainer{
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.img{
+    height: 180px;
+}
