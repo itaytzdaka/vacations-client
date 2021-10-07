@@ -13,6 +13,7 @@ import { StarFill } from 'react-bootstrap-icons';
 import io from "socket.io-client";
 import { NavBar } from "../nav-bar/navBar";
 import { Config } from "../../config";
+import { NavLink } from "react-router-dom";
 
 
 
@@ -193,6 +194,7 @@ export class Home extends Component<any, VacationsState>{
                                 <ListGroupItem>Start: {new Date(v.startingDate).toDateString()}</ListGroupItem>
                                 <ListGroupItem>end: {new Date(v.endingDate).toDateString()}</ListGroupItem>
                                 <ListGroupItem>Cost: {v.price}$</ListGroupItem>
+                                <ListGroupItem><NavLink className="purchase" to={"/purchase/"+v.vacationId} exact> purchase </NavLink></ListGroupItem>
                             </ListGroup>
                         </Card>
                     )}

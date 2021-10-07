@@ -1,0 +1,31 @@
+
+.purchaseVacation .img{
+    /* width: 500px !important; */
+    height: 300px !important;
+} 
+
+.purchaseVacation .header{
+    position: relative !important;
+    display: inline-block;
+    
+}
+
+.purchaseVacation .destination{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    text-shadow: 3px 3px 3px black;
+    font-size: xx-large;
+} 
+
+.purchaseVacation button{
+    width: 100px;
+    margin-bottom: 10px;
+}
+
+.purchaseVacation input{
+    width: 50px;
+    display: inline-block;
+}

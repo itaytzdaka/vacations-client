@@ -13,3 +13,16 @@
 .img{
     height: 180px;
 }
+
+.purchase{
+    background-color: cornflowerblue;
+    border-radius: 5px;
+    padding: 5px 8px;
+    color: rgb(255, 255, 255);
+}
+
+.purchase:hover{
+    background-color: rgb(36, 96, 206);
+    color: white;
+    text-decoration: none;
+}

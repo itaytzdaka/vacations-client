@@ -9,6 +9,7 @@ import { Admin } from "../admin/admin";
 import { EditVacation } from "../edit-vacation/editVacation";
 import { AddVacation } from "../add-vacation/addVacation";
 import { Reports } from "../reports/reports";
+import { Purchase } from "../purchase/purchase";
 
 
 export class App extends Component<any>{
@@ -53,6 +54,15 @@ export class App extends Component<any>{
                             path={"/registration"} key={"registration"}
                             render={props => (
                                 <Registration
+                                    {...props}
+                                />
+                            )}
+                        />
+                        <Route
+                            exact
+                            path={"/purchase/:id"} key={"purchase"}
+                            render={props => (
+                                <Purchase
                                     {...props}
                                 />
                             )}
