@@ -1,0 +1,9 @@
+.edit-container{
+    width: 90%;
+    margin: auto;
+    padding-bottom: 20px;
+}
+
+.text-muted{
+    color: red !important;
+}

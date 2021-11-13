@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import "./admin.css";
 import { VacationModel } from "../../models/vacation-model";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Unsubscribe } from "redux";
 import { store } from "../../redux/store";
 import { ActionType } from "../../redux/action-type";
@@ -96,9 +96,9 @@ export class Admin extends Component<any, VacationsState>{
         }
 
         catch (err) {
-            if (err.response.data === "Your login session has expired") {
+            if ((err as AxiosError).response?.data === "Your login session has expired") {
                 sessionStorage.clear();
-                alert(err.response.data);
+                alert((err as AxiosError).response?.data);
                 this.props.history.push("/login");
                 return;
             }
@@ -119,9 +119,9 @@ export class Admin extends Component<any, VacationsState>{
         }
 
         catch (err) {
-            if (err.response.data === "Your login session has expired") {
+            if ((err as AxiosError).response?.data === "Your login session has expired") {
                 sessionStorage.clear();
-                alert(err.response.data);
+                alert((err as AxiosError).response?.data);
                 this.props.history.push("/login");
                 return;
             }
@@ -136,17 +136,15 @@ export class Admin extends Component<any, VacationsState>{
         return (
             <div className="home">
                 <NavBar />
-                <br/>
-
-                <div className="cardContainer">
+                <div className="card-container">
                 {this.state.vacations.map(v =>
 
-                    <Card style={{ width: '18rem' }}  key={v.vacationId}>
+                    <Card key={v.vacationId}>
                         <Card.Img variant="top" className="img" src={"/assets/images/vacations/"+v.img} />
                         <Card.Body>
-                            <X color="black" size={20} onClick={() => this.delete(v.vacationId)} />
+                            <X className="delete" color="black" size={"1.5rem"} onClick={() => this.delete(v.vacationId)} />
                             <NavLink to={"/admin/" + v.vacationId}>
-                                <Pencil color="black" size={20} />
+                                <Pencil color="black" size={"1.5rem"} />
                             </NavLink>
                             <Card.Title>{v.destination}</Card.Title>
                             <Card.Text>

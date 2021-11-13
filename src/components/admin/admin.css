@@ -1,5 +1,16 @@
-.vacation{
+/* .vacation{
     display: inline-block;
     border: solid black 3px;
     margin: 5px;
-}
+} */
+
+/* .card-Container{
+    width: 90%;
+    margin: auto;
+    display: flex;
+    flex-wrap: wrap;
+    } */
+
+    .delete{
+        cursor: pointer;
+    }

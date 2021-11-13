@@ -4,15 +4,16 @@
     margin: 5px;
 }
 
-.cardContainer{
+.card-container{
     text-align: center;
     display: flex;
     flex-wrap: wrap;
+    margin: auto;
 }
 
-.img{
-    height: 180px;
-}
+
+
+
 
 .purchase{
     background-color: cornflowerblue;
@@ -25,4 +26,8 @@
     background-color: rgb(36, 96, 206);
     color: white;
     text-decoration: none;
+}
+
+.star-fill{
+    cursor: pointer;
 }

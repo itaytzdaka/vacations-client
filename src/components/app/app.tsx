@@ -10,6 +10,7 @@ import { EditVacation } from "../edit-vacation/editVacation";
 import { AddVacation } from "../add-vacation/addVacation";
 import { Reports } from "../reports/reports";
 import { Purchase } from "../purchase/purchase";
+import { Purchases } from "../purchases/purchases";
 
 
 export class App extends Component<any>{
@@ -63,6 +64,15 @@ export class App extends Component<any>{
                             path={"/purchase/:id"} key={"purchase"}
                             render={props => (
                                 <Purchase
+                                    {...props}
+                                />
+                            )}
+                        />
+                        <Route
+                            exact
+                            path={"/purchases"} key={"purchases"}
+                            render={props => (
+                                <Purchases
                                     {...props}
                                 />
                             )}

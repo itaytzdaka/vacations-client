@@ -1,13 +1,13 @@
 
 .purchaseVacation .img{
-    /* width: 500px !important; */
-    height: 300px !important;
+    width: 100%;
+    height: auto;
 } 
 
 .purchaseVacation .header{
     position: relative !important;
     display: inline-block;
-    
+    width: 90%;
 }
 
 .purchaseVacation .destination{
@@ -26,6 +26,10 @@
 }
 
 .purchaseVacation input{
-    width: 50px;
+    width: 3rem;
     display: inline-block;
+}
+
+.card-purchase{
+    width: 30rem;
 }

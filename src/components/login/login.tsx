@@ -1,19 +1,20 @@
 import React, { Component, ChangeEvent } from "react";
 import "./login.css";
 import { NavLink } from "react-router-dom";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { UserModel } from "../../models/user-model";
-import {validateUserName,validatePassword} from "../../services/user-validation";
+import { validateUserName, validatePassword } from "../../services/user-validation";
 import { Config } from "../../config";
+import Button from 'react-bootstrap/Button';
 
 
 
 interface UserState {
     user: UserModel;
-    errors: {   
+    errors: {
         userNameError: string,
         passwordError: string,
-      };
+    };
 }
 
 export class Login extends Component<any, UserState>{
@@ -22,7 +23,7 @@ export class Login extends Component<any, UserState>{
         super(props);
         this.state = {
             user: new UserModel(),
-            errors: { userNameError: "*",passwordError:"*"}
+            errors: { userNameError: "*", passwordError: "*" }
 
         };
     }
@@ -59,7 +60,7 @@ export class Login extends Component<any, UserState>{
     private login = async () => {
 
         try {
-            const response = await axios.post(Config.serverUrl+"/api/auth/login",
+            const response = await axios.post(Config.serverUrl + "/api/auth/login",
                 this.state.user);
             sessionStorage.setItem("user", JSON.stringify(response.data.user));
             sessionStorage.setItem("token", response.data.token);
@@ -68,13 +69,13 @@ export class Login extends Component<any, UserState>{
         }
 
         catch (err) {
-            if(err.response.data==="Illegal username or password"){
-                alert(err.response.data);
+            if ((err as AxiosError).response?.data === "Illegal username or password") {
+                alert((err as AxiosError).response?.data);
                 return;
             }
 
-            else{
-                alert(err.message);
+            else {
+                alert(err);
             }
         }
 
@@ -94,7 +95,7 @@ export class Login extends Component<any, UserState>{
 
     public componentDidMount() {
         //if the user is logged in, navigate to Home page
-        if (sessionStorage.getItem("token") && JSON.parse(sessionStorage.getItem("user")) ) {
+        if (sessionStorage.getItem("token") && JSON.parse(sessionStorage.getItem("user"))) {
             this.props.history.push("/");
             return;
         }
@@ -103,13 +104,19 @@ export class Login extends Component<any, UserState>{
     public render() {
         return (
             <div className="login">
-                <div className="cardLogIn">
-                    <h1>Login</h1>
-                    <input type="text" name="" id="userBox" placeholder="User Name" onChange={this.setUserName} />
-                    <input type="password" name="" id="userBox" placeholder="Password" onChange={this.setPassword} />
-                    <br/>
-                    <button disabled={!this.isFormLegal()} onClick={this.login}>Login</button>
+                <div className="card-login">
+                    <form className="form-login" action="">
+                        <h1>Login</h1>
+                        <input type="text" name="" id="userBox" placeholder="User Name" onChange={this.setUserName} />
+                        <input type="password" name="" id="userBox" placeholder="Password" onChange={this.setPassword} />
+                        <br />
+                        {/* <button disabled={!this.isFormLegal()} onClick={this.login}>Login</button> */}
+                        <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.login}>
+                            Login
+                        </Button >
+                    </form>
                     <NavLink className="navigate" to="/registration" exact>Not a member? Sign up now</NavLink>
+
                 </div>
             </div>
         );

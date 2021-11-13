@@ -6,7 +6,7 @@ import { store } from "../../redux/store";
 import { Bar } from 'react-chartjs-2';
 import { FollowModel } from "../../models/follow-model";
 import io from "socket.io-client";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { ActionType } from "../../redux/action-type";
 import { getRandomColor } from "../../services/color";
 import { NavBar } from "../nav-bar/navBar";
@@ -115,9 +115,9 @@ export class Reports extends Component<any, reportsState>{
             store.dispatch({ type: ActionType.PrepareVacationsForUser });
         }
         catch (err) {
-            if (err.response.data === "Your login session has expired") {
+            if ((err as AxiosError).response?.data === "Your login session has expired") {
                 sessionStorage.clear();
-                alert(err.response.data);
+                alert((err as AxiosError).response?.data);
                 this.props.history.push("/login");
                 return;
             }

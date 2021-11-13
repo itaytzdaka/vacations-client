@@ -33,26 +33,56 @@ export class NavBar extends Component<any, userState>{
 
     public render() {
         return (
-            <div className="barMenu">
-                <div className="left">
-                    <NavLink to="/" exact>Home</NavLink>
-                    {this.state.user.isAdmin ? (<span> |
-                                                <NavLink to="/admin" exact> Admin </NavLink>
-                                                <span>|</span>
-                                                <NavLink to="/admin/add" exact> Add Vacation</NavLink>
-                                                <span>|</span>
-                                                <NavLink to="/reports" exact> Reports </NavLink>
-                                            </span>):null}
+            <div className="nav-bar">
+                <div className="nav-container">
+                    <nav>
+                        {this.state.user.isAdmin ? (
+                            <ul>
+                                <li>
+                                    <NavLink to="/" exact>Home</NavLink>
+                                </li>
+                                <li>
+                                    <NavLink to="/admin" exact> Edit Vacation </NavLink>
+                                </li>
+                                <li>
+                                    <NavLink to="/admin/add" exact> Add Vacation</NavLink>
+                                </li>
+                                <li>
+                                    <NavLink to="/purchases" exact> Purchases</NavLink>
+                                </li>
+                                <li>
+                                    <NavLink to="/reports" exact> Reports </NavLink>
+                                </li>
+                            </ul>
+                        ) :
+                            <ul>
+                                <li>
+                                    <NavLink to="/" exact>Home</NavLink>
+                                </li>
+                            </ul>
 
-                    <div className="right">Hello {this.state.user.userName} </div>
-                </div>
-                <div>
-                    <NavLink to="/login" exact>
-                        <Button onClick={this.logOut}>Log out</Button>
-                    </NavLink>
-                </div>
+                        }
+                        <div className="user">
+                            <div> Hello {this.state.user.userName} </div>
 
+                            <div>
+                                <NavLink to="/login" exact>
+                                    <Button onClick={this.logOut}>Log out</Button>
+                                </NavLink>
+                            </div>
+                        </div>
+
+
+                    </nav>
+
+                </div>
+                <div className="space">
+
+                </div>
             </div>
+
+
+
         )
     }
 }

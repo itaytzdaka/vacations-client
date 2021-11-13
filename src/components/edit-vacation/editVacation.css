@@ -3,3 +3,24 @@
     border: solid black 3px;
     margin: 5px;
 } */
+
+.form-container{
+    width: 90%;
+    margin: auto;
+    padding-bottom: 20px;
+
+}
+
+.text-muted{
+    position: absolute;
+    color: red !important;
+}
+
+h1{
+    display: block;
+    margin: auto;
+}
+
+.form-group{
+    margin-bottom: 2rem;
+}

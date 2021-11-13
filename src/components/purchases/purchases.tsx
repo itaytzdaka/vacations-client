@@ -1,6 +1,5 @@
 import React, { Component, ChangeEvent } from "react";
-import "./purchase.css";
-import { VacationModel } from "../../models/vacation-model";
+import "./purchases.css";
 import { PurchaseModel } from "../../models/purchase-model";
 
 import axios from "axios";
@@ -16,27 +15,20 @@ import Card from 'react-bootstrap/Card';
 
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import Table from 'react-bootstrap/Table';
 
 
 import { Config } from "../../config";
+import { VacationModel } from "../../models/vacation-model";
 
-interface VacationState {
+interface PurchaseState {
+    purchases: PurchaseModel[];
     vacations: VacationModel[];
-    purchase: PurchaseModel;
-    vacation: VacationModel;
     // numberOfTickets: number;
     // totalPrice: number;
-    errors: {
-        descriptionError: string,
-        destinationError: string,
-        imgError: string,
-        startingDateError: string,
-        endingDateError: string,
-        priceError: string
-    };
 }
 
-export class Purchase extends Component<any, VacationState>{
+export class Purchases extends Component<any, PurchaseState>{
 
     private unsubscribeStore: Unsubscribe;
 
@@ -48,12 +40,10 @@ export class Purchase extends Component<any, VacationState>{
 
         //get vacations from the store
         this.state = {
-            vacations: store.getState().vacations,
-            purchase: {},
-            vacation: {},
+            purchases: [],
+            vacations: []
             // numberOfTickets: 0,
             // totalPrice: 0,
-            errors: { descriptionError: "", destinationError: "", imgError: "", startingDateError: "", endingDateError: "", priceError: "" }
         };
 
     }
@@ -65,9 +55,14 @@ export class Purchase extends Component<any, VacationState>{
 
         //if is there any changes in the store get the vacations from the new store.
         this.unsubscribeStore = store.subscribe(() => {
+            // const purchases = store.getState().purchases;
             const vacations = store.getState().vacations;
             this.setState({ vacations });
+            // this.setState({ purchases });
         });
+
+        let vacations = store.getState().vacations;
+        let purchases;
 
         //if there is no token, link to the login page
         // if (!sessionStorage.getItem("token") || !sessionStorage.getItem("user")) {
@@ -82,44 +77,41 @@ export class Purchase extends Component<any, VacationState>{
 
 
         try {
-            let vacation;
 
             //if the store is not empty, find the vacation for edit and don't use axios at all
-            if (this.state.vacations.length > 0) {
-
-                for (let v of this.state.vacations) {
-                    if (v.vacationId === +this.props.match.params.id) {
-                        vacation = ({ ...v });
-                    }
-
-                }
-            }
-
-            // if the store is empty, get the vacation for edit with axios
-            else {
+            if (this.state.purchases.length === 0) {
                 const response = await
-                    axios.get<VacationModel>(`${Config.serverUrl}/api/vacations/${+this.props.match.params.id}`);
-                vacation = response.data;
+                    axios.get<PurchaseModel[]>(`${Config.serverUrl}/api/purchases`);
+                purchases = response.data;
             }
+            if (this.state.vacations.length === 0) {
+                const response = await
+                    axios.get<VacationModel[]>(`${Config.serverUrl}/api/vacations`);
+                vacations = response.data;
+            }
+
+
+
 
             //treatment with json date format
-            vacation.startingDate = JsonToString(vacation.startingDate);
-            vacation.endingDate = JsonToString(vacation.endingDate);
-            this.setState({ vacation });
+            // vacation.startingDate = JsonToString(vacation.startingDate);
+            // vacation.endingDate = JsonToString(vacation.endingDate);
+
             // console.log("this.state.vacation");
             // console.log(this.state.vacation);
             // console.log(vacation);
 
-            const purchase = { ...this.state.purchase };
-            purchase.vacationId = vacation.vacationId;
-            purchase.userName = JSON.parse(sessionStorage.getItem("user")).userName;
-            purchase.priceForTicket = vacation.price;
-            this.setState({ purchase });
-            console.log("this.state.purchase");
-            console.log(this.state.purchase);
+            // const purchase = { ...this.state.purchase };
+            // purchase.vacationId=vacation.vacationId;
+            // purchase.userName=JSON.parse(sessionStorage.getItem("user")).userName;
+            // purchase.priceForTicket=vacation.price;
+            // this.setState({ purchase });
+            // console.log("this.state.purchase");
+            // console.log(this.state.purchase);
         }
 
         catch (err) {
+            console.log(err);
             // if (err.response.data === "Your login session has expired") {
             //     sessionStorage.clear();
             //     alert(err.response.data);
@@ -132,6 +124,14 @@ export class Purchase extends Component<any, VacationState>{
             // }
 
         }
+        //     const errors = { ...this.state.errors };
+        this.setState({ vacations });
+
+        purchases.forEach(p => {
+            p.vacation = vacations.find(v => v.vacationId == p.vacationId);
+        });
+        this.setState({ purchases });
+        console.log(purchases);
 
     }
 
@@ -215,41 +215,8 @@ export class Purchase extends Component<any, VacationState>{
     //     this.setState({ vacation });
     // }
 
-    private setAmountOfTickets = (args: ChangeEvent<HTMLInputElement>) => {
-        console.log("this.state.purchase");
-        console.log(this.state.purchase);
 
-        const purchase = { ...this.state.purchase };
-        purchase.tickets = +args.target.value;
-        purchase.totalPrice = purchase.tickets * this.state.vacation.price;
-        // console.log(purchase);
 
-        // const vacation = { ...this.state.vacation };
-        // const totalPrice= numberOfTickets*vacation.price;
-        this.setState({ purchase });
-        console.log("this.state.purchase");
-        console.log(this.state.purchase);
-
-        // this.state.numberOfTickets=amount;
-        // let nameError;
-        // nameError = validatePrice(price);
-
-        // const errors = { ...this.state.errors };
-        // errors.priceError = nameError;
-        // this.setState({ errors });
-
-        // const vacation = { ...this.state.vacation };
-        // vacation.price = price;
-        // this.setState({ vacation });
-    }
-
-    private isFormLegal() {
-        if (this.state.purchase.totalPrice <= 0) {
-            return false;
-        }
-
-        return true;
-    }
 
     // public update = async () => {
     //     try {
@@ -287,80 +254,42 @@ export class Purchase extends Component<any, VacationState>{
     //     }
     // }
 
-    private send = async () => {
-        try {
-            const dateNow = new Date();
-            let purchase = { ...this.state.purchase };
-            purchase.date = dateNow;
-            console.log("send")
-            console.log("purchase");
-            console.log(purchase);
-            const response = await axios.post<PurchaseModel>(Config.serverUrl + "/api/purchases",
-                purchase);
-            console.log("response.data");
-            console.log(response.data);
-            purchase = response.data;
-            this.props.history.push("/");
-
-            // console.log(response);
-            // console.log("purchase");
-            // console.log(purchase);
-        }
-        catch (err) {
-            console.log(err);
-        }
-
-    }
 
 
     public render() {
         return (
-            <div className="purchaseVacation">
+            <div className="purchases">
                 <NavBar />
-                <div className="card-container">
-                    <Card className="card-purchase">
-                        <Card.Header >
-                            <div className="header">
-                                <img className="img" src={"/assets/images/vacations/" + this.state.vacation.img} />
-                                <span className="destination">{this.state.vacation.destination || ""}</span>
-                            </div>
-                        </Card.Header>
-                        <Card.Body>
-                            <Card.Title>Description:</Card.Title>
-                            <Card.Text>
-                                {this.state.vacation.description || ""}
-                            </Card.Text>
-                            <Card.Title>Vacation Date:</Card.Title>
-                            <Card.Text>
-                                From {new Date(this.state.vacation.startingDate).toDateString()} to  {new Date(this.state.vacation.endingDate).toDateString()}
-                            </Card.Text>
-                            <Card.Title>One ticket cost:</Card.Title>
-                            <Card.Text>
-                                {this.state.vacation.price || ""}$
-                            </Card.Text>
-                        </Card.Body>
-                        <Card.Header >
-                            <h2>Purchase</h2>
-                        </Card.Header>
-                        <Card.Body>
-                            <Card.Text>
-                                Number Of tickets: <input type="text" pattern="[0-9]*" onInput={this.setAmountOfTickets.bind(this)} value={this.state.purchase.tickets} />
-                                {/* <input type="number" value={this.state.numberOfTickets || ""} onChange={this.setAmountOfTickets} ></input> */}
-                            </Card.Text>
-                            <Card.Text>
-                                Total price: {this.state.purchase.totalPrice || ""}$
-                            </Card.Text>
-                            <Card.Text>
-                                <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.send} >
-                                    Buy
-                                </Button >
-                            </Card.Text>
-                        </Card.Body>
 
-                    </Card>
+                <div className="table-container">
+                    <h1>Purchases</h1>
+                    <br />
+                    <Table striped bordered hover>
+                        <thead>
+                            <tr>
+                                <th>User Name</th>
+                                <th>Number of Tickets</th>
+                                <th>Total price</th>
+                                <th>Vacation</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        {this.state.purchases.map(p =>
+                            <tbody>
+                                <tr>
+                                    <td>{p.userName}</td>
+                                    <td>{p.tickets}</td>
+                                    <td>{p.totalPrice}</td>
+                                    <td>{p.vacation.destination}</td>
+                                    <td>{new Date(p.date).toDateString()}</td>
+
+                                </tr>
+                            </tbody>
+                        )}
+
+                    </Table>
+
                 </div>
-
-
             </div>
         );
     }

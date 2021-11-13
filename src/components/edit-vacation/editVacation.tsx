@@ -1,7 +1,7 @@
 import React, { Component, ChangeEvent } from "react";
 import "./editVacation.css";
 import { VacationModel } from "../../models/vacation-model";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Unsubscribe } from "redux";
 import { store } from "../../redux/store";
 import { JsonToString } from "../../services/date";
@@ -48,6 +48,7 @@ export class EditVacation extends Component<any, VacationState>{
 
     public async componentDidMount() {
 
+
         //create connection to the server
         this.socket = io.connect("http://localhost:3000");
 
@@ -70,47 +71,54 @@ export class EditVacation extends Component<any, VacationState>{
         }
 
 
-        try {
-            let vacation;
 
-            //if the store is not empty, find the vacation for edit and don't use axios at all
-            if (this.state.vacations.length > 0) {
+        let vacation;
 
-                for (let v of this.state.vacations) {
-                    if (v.vacationId === +this.props.match.params.id) {
-                        vacation = ({ ...v });
-                    }
+        //if the store is not empty, find the vacation for edit and don't use axios at all
+        if (this.state.vacations.length > 0) {
 
+            for (let v of this.state.vacations) {
+                if (v.vacationId === +this.props.match.params.id) {
+                    vacation = ({ ...v });
                 }
-            }
 
-            // if the store is empty, get the vacation for edit with axios
-            else {
+            }
+        }
+
+        // if the store is empty, get the vacation for edit with axios
+        else {
+            try {
                 const response = await
                     axios.get<VacationModel>(`${Config.serverUrl}/api/vacations/${+this.props.match.params.id}`);
+                // console.log(response);
                 vacation = response.data;
 
             }
 
-            //treatment with json date format
-            vacation.startingDate = JsonToString(vacation.startingDate);
-            vacation.endingDate = JsonToString(vacation.endingDate);
-            this.setState({ vacation });
-        }
 
-        catch (err) {
-            if (err.response.data === "Your login session has expired") {
-                sessionStorage.clear();
-                alert(err.response.data);
-                this.props.history.push("/login");
-                return;
+            catch (err) {
+                console.log(err as AxiosError);
+                if ((err as AxiosError).response?.data === "Your login session has expired") {
+                    sessionStorage.clear();
+                    alert(err);
+                    // this.props.history.push("/login");
+                    return;
+                }
+
+                else {
+                    alert((err as AxiosError).response?.data);
+                }
+
             }
 
-            else {
-                alert(err);
-            }
+
 
         }
+
+        //treatment with json date format
+        vacation.startingDate = JsonToString(vacation.startingDate);
+        vacation.endingDate = JsonToString(vacation.endingDate);
+        this.setState({ vacation });
 
     }
 
@@ -237,14 +245,14 @@ export class EditVacation extends Component<any, VacationState>{
         catch (err) {
             console.log("err");
             console.log(err);
-            if (err.response.data === "Your login session has expired") {
+            if ((err as AxiosError).response?.data === "Your login session has expired") {
                 sessionStorage.clear();
-                alert(err.response.data);
+                alert((err as AxiosError).response?.data);
                 this.props.history.push("/login");
                 return;
             }
 
-            else if (err.response.data === "You are not admin!") {
+            else if ((err as AxiosError).response?.data === "You are not admin!") {
                 this.props.history.push("/login");
                 return;
             }
@@ -259,55 +267,66 @@ export class EditVacation extends Component<any, VacationState>{
     public render() {
         return (
             <div className="EditVacation">
-                <NavBar/>
-                <br />
-                <Form.Group controlId="formBasicText">
-                    <Form.Label>Destination</Form.Label>
-                    <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.destination || ""} onChange={this.setDestination} />
-                    <Form.Text className="text-muted">
-                        {this.state.errors.destinationError}
-                    </Form.Text>
-                </Form.Group>
+                <NavBar />
+                <div className="form-container">
+                    <h1>Edit Vacation</h1>
+                    <br />
+                    <Form>
 
-                <Form.Group controlId="formBasicText">
-                    <Form.Label>Description</Form.Label>
-                    <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.description || ""} onChange={this.setDescription} />
-                    <Form.Text className="text-muted" >
-                        {this.state.errors.descriptionError}
-                    </Form.Text>
-                </Form.Group>
+                        <Form.Group controlId="formBasicText">
+                            <Form.Label>Destination</Form.Label>
+                            <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.destination || ""} onChange={this.setDestination} />
+                            <Form.Text className="text-muted">
+                                {this.state.errors.destinationError}
+                            </Form.Text>
+                        </Form.Group>
 
-                <Form.Group controlId="formBasicText">
-                    <Form.Label>Image URL</Form.Label>
-                    <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.img || ""} onChange={this.setImgUrl} />
-                    <Form.Text className="text-muted" >
-                        {this.state.errors.imgError}
-                    </Form.Text>
-                </Form.Group>
+                        <Form.Group controlId="formBasicText">
+                            <Form.Label>Description</Form.Label>
+                            <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.description || ""} onChange={this.setDescription} />
+                            <Form.Text className="text-muted" >
+                                {this.state.errors.descriptionError}
+                            </Form.Text>
+                        </Form.Group>
 
-                <Form.Label>Start Date</Form.Label>
-                <Form.Control type="date" placeholder="Enter description" value={this.state.vacation.startingDate || ""} onChange={this.setStartingDate} />
-                <Form.Text className="text-muted">
-                    {this.state.errors.startingDateError}
-                </Form.Text>
+                        <Form.Group controlId="formBasicText">
+                            <Form.Label>Image URL</Form.Label>
+                            <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.img || ""} onChange={this.setImgUrl} />
+                            <Form.Text className="text-muted" >
+                                {this.state.errors.imgError}
+                            </Form.Text>
+                        </Form.Group>
 
-                <Form.Label>Ending Date</Form.Label>
-                <Form.Control type="date" placeholder="Enter description" value={this.state.vacation.endingDate || ""} onChange={this.setEndingDate} />
-                <Form.Text className="text-muted">
-                    {this.state.errors.endingDateError}
-                </Form.Text>
+                        <Form.Group controlId="formBasicText">
+                            <Form.Label>Start Date</Form.Label>
+                            <Form.Control type="date" placeholder="Enter description" value={this.state.vacation.startingDate || ""} onChange={this.setStartingDate} />
+                            <Form.Text className="text-muted">
+                                {this.state.errors.startingDateError}
+                            </Form.Text>
+                        </Form.Group>
 
-                <Form.Group controlId="formBasicText">
-                    <Form.Label>Price</Form.Label>
-                    <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.price || ""} onChange={this.setPrice} />
-                    <Form.Text className="text-muted">
-                        {this.state.errors.priceError}
-                    </Form.Text>
-                </Form.Group>
+                        <Form.Group controlId="formBasicText">
+                            <Form.Label>Ending Date</Form.Label>
+                            <Form.Control type="date" placeholder="Enter description" value={this.state.vacation.endingDate || ""} onChange={this.setEndingDate} />
+                            <Form.Text className="text-muted">
+                                {this.state.errors.endingDateError}
+                            </Form.Text>
+                        </Form.Group>
 
-                <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.update}>
-                    Submit
-                    </Button >
+                        <Form.Group controlId="formBasicText">
+                            <Form.Label>Price</Form.Label>
+                            <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.price || ""} onChange={this.setPrice} />
+                            <Form.Text className="text-muted">
+                                {this.state.errors.priceError}
+                            </Form.Text>
+                        </Form.Group>
+
+                        <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.update}>
+                            Submit
+                        </Button >
+                    </Form>
+                </div>
+
             </div>
         );
     }

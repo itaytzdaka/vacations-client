@@ -1,7 +1,7 @@
 import React, { Component, ChangeEvent } from "react";
 import "./addVacation.css";
 import { VacationModel } from "../../models/vacation-model";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { store } from "../../redux/store";
 import { ActionType } from "../../redux/action-type";
 import {
@@ -11,7 +11,7 @@ import {
     validateStartingDate,
     validateEndingDate,
     validatePrice
-}from "../../services/vacation-validation";
+} from "../../services/vacation-validation";
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import io from "socket.io-client";
@@ -177,10 +177,10 @@ export class AddVacation extends Component<any, VacationState>{
     //add a new vacation, to database and store, emit, and redirect to /login
     private add = async () => {
         try {
-            const response = await axios.post<VacationModel>(Config.serverUrl+"/api/vacations",
+            const response = await axios.post<VacationModel>(Config.serverUrl + "/api/vacations",
                 this.state.vacation);
-            const addedVacation =response.data;
-            addedVacation.follows=0;
+            const addedVacation = response.data;
+            addedVacation.follows = 0;
             addedVacation.startingDate = StringToJson(addedVacation.startingDate);
             addedVacation.endingDate = StringToJson(addedVacation.endingDate);
             console.log(addedVacation);
@@ -190,15 +190,15 @@ export class AddVacation extends Component<any, VacationState>{
 
         }
         catch (err) {
-            if (err.response.data === "Your login session has expired") {
+            if ((err as AxiosError).response?.data === "Your login session has expired") {
                 // alert(err.response.data);
                 sessionStorage.clear();
-                alert(err.response.data);
+                alert((err as AxiosError).response?.data);
                 this.props.history.push("/login");
                 return;
             }
 
-            else if (err.response.data === "You are not admin!") {
+            else if ((err as AxiosError).response?.data === "You are not admin!") {
                 this.props.history.push("/login");
                 return;
             }
@@ -218,60 +218,64 @@ export class AddVacation extends Component<any, VacationState>{
 
         return (
             <div className="EditVacation">
-                <NavBar/>
-                <br/>
-                <p>Add a vacation</p>
+                <NavBar />
+                <div className="edit-container">
+                    <h1>Add Vacation</h1>
+                    <br />
+                    <Form.Group controlId="formBasicText">
+                        <Form.Label>Destination</Form.Label>
+                        <Form.Control type="text" placeholder="Enter destination" value={this.state.vacation.destination || ""} onChange={this.setDestination} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.destinationError=="*"? "" : this.state.errors.destinationError }
+                        </Form.Text>
+                    </Form.Group>
 
-                <Form.Group controlId="formBasicText">
-                    <Form.Label>Destination</Form.Label>
-                    <Form.Control type="text" placeholder="Enter destination" value={this.state.vacation.destination || ""} onChange={this.setDestination} />
-                    <Form.Text className="text-muted">
-                        {this.state.errors.destinationError}
-                    </Form.Text>
-                </Form.Group>
+                    <Form.Group controlId="formBasicText">
+                        <Form.Label>Description</Form.Label>
+                        <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.description || ""} onChange={this.setDescription} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.descriptionError=="*"? "" : this.state.errors.descriptionError}
+                        </Form.Text>
+                    </Form.Group>
 
-                <Form.Group controlId="formBasicText">
-                    <Form.Label>Description</Form.Label>
-                    <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.description || ""} onChange={this.setDescription} />
-                    <Form.Text className="text-muted">
-                        {this.state.errors.descriptionError}
-                    </Form.Text>
-                </Form.Group>
+                    <Form.Group controlId="formBasicText">
+                        <Form.Label>Image URL</Form.Label>
+                        <Form.Control type="text" placeholder="Enter img" value={this.state.vacation.img || ""} onChange={this.setImgUrl} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.imgError=="*"? "" : this.state.errors.imgError}
+                        </Form.Text>
+                    </Form.Group>
 
-                <Form.Group controlId="formBasicText">
-                    <Form.Label>Image URL</Form.Label>
-                    <Form.Control type="text" placeholder="Enter img" value={this.state.vacation.img || ""} onChange={this.setImgUrl} />
-                    <Form.Text className="text-muted">
-                        {this.state.errors.imgError}
-                    </Form.Text>
-                </Form.Group>
+                    <Form.Group controlId="formBasicText">
+                        <Form.Label>Start Date</Form.Label>
+                        <Form.Control type="date" value={this.state.vacation.startingDate || ""} onChange={this.setStartingDate} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.startingDateError=="*"? "" : this.state.errors.startingDateError}
+                        </Form.Text>
+                    </Form.Group>
 
-                <Form.Label>Start Date</Form.Label>
-                <Form.Control type="date"  value={this.state.vacation.startingDate || ""} onChange={this.setStartingDate} />
-                <Form.Text className="text-muted">
-                    {this.state.errors.startingDateError}
-                </Form.Text>
+                    <Form.Group controlId="formBasicText">
+                        <Form.Label>Ending Date</Form.Label>
+                        <Form.Control type="date" value={this.state.vacation.endingDate || ""} onChange={this.setEndingDate} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.endingDateError=="*"? "" : this.state.errors.endingDateError}
+                        </Form.Text>
+                    </Form.Group>
 
-                <Form.Label>Ending Date</Form.Label>
-                <Form.Control type="date" value={this.state.vacation.endingDate || ""} onChange={this.setEndingDate} />
-                <Form.Text className="text-muted">
-                    {this.state.errors.endingDateError}
-                </Form.Text>
+                    <Form.Group controlId="formBasicText">
+                        <Form.Label>Price</Form.Label>
+                        <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.price || ""} onChange={this.setPrice} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.priceError=="*"? "" : this.state.errors.priceError}
+                        </Form.Text>
+                    </Form.Group>
 
-                <Form.Group controlId="formBasicText">
-                    <Form.Label>Price</Form.Label>
-                    <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.price || ""} onChange={this.setPrice} />
-                    <Form.Text className="text-muted">
-                        {this.state.errors.priceError}
-                    </Form.Text>
-                </Form.Group>
-
-                <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.add}>
-                    Submit
+                    <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.add}>
+                        Submit
                     </Button >
-        
-            </div>
 
+                </div>
+            </div>
         );
     }
 }

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import "./home.css";
 import { VacationModel } from "../../models/vacation-model";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Unsubscribe } from "redux";
 import { store } from "../../redux/store";
 import { FollowModel } from "../../models/follow-model";
@@ -76,7 +76,7 @@ export class Home extends Component<any, VacationsState>{
             }
 
             catch (err) {
-                if (err.response.data === "Your login session has expired") {
+                if ((err as AxiosError).response?.data === "Your login session has expired") {
                     sessionStorage.clear();
                     this.props.history.push("/login");
                     return;
@@ -121,7 +121,7 @@ export class Home extends Component<any, VacationsState>{
         }
 
         catch (err) {
-            if (err.response.data === "Your login session has expired") {
+            if ((err as AxiosError).response?.data === "Your login session has expired") {
                 sessionStorage.clear();
                 this.props.history.push("/login");
                 return;
@@ -148,7 +148,7 @@ export class Home extends Component<any, VacationsState>{
         }
 
         catch (err) {
-            if (err.response.data === "Your login session has expired") {
+            if ((err as AxiosError).response?.data === "Your login session has expired") {
                 sessionStorage.clear();
                 this.props.history.push("/login");
                 return;
@@ -174,15 +174,14 @@ export class Home extends Component<any, VacationsState>{
         return (
             <div className="home">
                 <NavBar />
-                <br />
-                <div className="cardContainer">
+                <div className="card-container">
                     {this.state.vacations.map(v =>
 
 
-                        <Card style={{ width: '18rem' }} className="card"  key={v.vacationId}>
+                        <Card   key={v.vacationId}>
                             <Card.Img variant="top" className="img" src={"/assets/images/vacations/" + v.img} />
                             <Card.Body>
-                                {v.isFollow ? <StarFill color="yellow" size={20} onClick={() => this.removeFollow(v.vacationId)} /> : <StarFill color="grey" size={20} onClick={() => this.addFollow(v.vacationId)} />}
+                                {v.isFollow ? <StarFill className="star-fill" color="yellow" size={"1.5rem"} onClick={() => this.removeFollow(v.vacationId)} /> : <StarFill className="star-fill" color="grey" size={"1.5rem"} onClick={() => this.addFollow(v.vacationId)} />}
 
                                 <Card.Title>{v.destination}</Card.Title>
                                 <Card.Text>
