@@ -9,30 +9,33 @@ import {
     validateFirstName,
     validateLastName,
     validatePassword,
-    verifyPassword}
-     from "../../services/user-validation";
+    verifyPassword
+}
+    from "../../services/user-validation";
 import { Config } from "../../config";
+import Button from 'react-bootstrap/Button';
 
 interface UserState {
     user: UserModel;
     usersNames: UserModel[];
-    errors: {   userNameError: string,
-                firstNameError: string,
-                lastNameError: string,
-                passwordError: string,
-                verifyPasswordError: string
-              };
+    errors: {
+        userNameError: string,
+        firstNameError: string,
+        lastNameError: string,
+        passwordError: string,
+        verifyPasswordError: string
+    };
 
 }
 
-export class Registration extends Component<any,UserState>{
+export class Registration extends Component<any, UserState>{
 
     public constructor(props: any) {
         super(props);
         this.state = {
             user: new UserModel(),
             usersNames: [],
-            errors: { userNameError: "*", firstNameError: "*", lastNameError: "*",passwordError:"*",verifyPasswordError:"*"}
+            errors: { userNameError: "*", firstNameError: "*", lastNameError: "*", passwordError: "*", verifyPasswordError: "*" }
         };
     }
 
@@ -41,11 +44,11 @@ export class Registration extends Component<any,UserState>{
 
         let nameError;
 
-        nameError = validateAvailableUserName(userName,this.state.usersNames);
-        if(nameError!=="user name is not available"){
-            nameError=validateUserName(userName);
+        nameError = validateAvailableUserName(userName, this.state.usersNames);
+        if (nameError !== "user name is not available") {
+            nameError = validateUserName(userName);
         }
-        
+
         const errors = { ...this.state.errors };
         errors.userNameError = nameError;
         this.setState({ errors });
@@ -103,8 +106,8 @@ export class Registration extends Component<any,UserState>{
     private verifyPasswordUser = (args: ChangeEvent<HTMLInputElement>) => {
         const verifiedPassword = args.target.value;
         const user = { ...this.state.user };
-        
-        let nameError = verifyPassword(verifiedPassword,user.password);
+
+        let nameError = verifyPassword(verifiedPassword, user.password);
 
         const errors = { ...this.state.errors };
         errors.verifyPasswordError = nameError;
@@ -123,7 +126,7 @@ export class Registration extends Component<any,UserState>{
     private register = async () => {
 
         try {
-            const response = await axios.post(Config.serverUrl+"/api/auth/register",
+            const response = await axios.post(Config.serverUrl + "/api/auth/register",
                 this.state.user);
 
             sessionStorage.setItem("user", JSON.stringify(response.data.user));
@@ -133,27 +136,26 @@ export class Registration extends Component<any,UserState>{
         }
 
         catch (err) {
-            alert(err.message);
+            alert(err);
         }
 
     }
 
-    public async getAllUsersNames(){
-        try{
-            const response = await axios.get<UserModel[]>(Config.serverUrl+"/api/auth/usersNames");
-            const usersNames=response.data;
+    public async getAllUsersNames() {
+        try {
+            const response = await axios.get<UserModel[]>(Config.serverUrl + "/api/auth/usersNames");
+            const usersNames = response.data;
 
-            this.setState({usersNames});
+            this.setState({ usersNames });
         }
 
-        catch(err)
-        {
+        catch (err) {
             alert(err);
         }
     }
 
 
-    public componentDidMount(){
+    public componentDidMount() {
         //if the user is logged in, navigate to home page
         if (sessionStorage.getItem("token")) {
             this.props.history.push("/");
@@ -166,21 +168,33 @@ export class Registration extends Component<any,UserState>{
     public render() {
         return (
             <div className="registration">
-                <div className="cardRegistration">
+                <div className="card-registration">
                     <h1>Sign up</h1>
-                    <input type="text" name="" id="userBox" placeholder="User Name" onChange={this.setUserName}/>
-                    <span>{this.state.errors.userNameError}</span>
-                    <input type="text" name="" id="userBox" placeholder="First Name" onChange={this.setFirstName}/>
-                    <span>{this.state.errors.firstNameError}</span>
-                    <input type="text" name="" id="userBox" placeholder="Last Name" onChange={this.setLastName}/>
-                    <span>{this.state.errors.lastNameError}</span>
-                    <input type="password" name="" id="userBox" placeholder="Password" onChange={this.setPassword}/>
-                    <span>{this.state.errors.passwordError}</span>
-                    <input type="password" name="" id="userBox" placeholder="Verify Password" onChange={this.verifyPasswordUser}/>
-                    <span>{this.state.errors.verifyPasswordError}</span>
-                    <br/>
-                    <button disabled={!this.isFormLegal()} onClick={this.register}>Sign up</button>
-                    <NavLink className="navigateLogin" to="/login" exact>Do you have an account? Sign in now</NavLink>
+                    <form action="">
+                        <div className="input-box">
+                            <input type="text" name="" id="userBox" placeholder="User Name" onChange={this.setUserName} />
+                            <span className="error">{this.state.errors.userNameError == "*" ? "" : this.state.errors.userNameError}</span>
+                        </div>
+                        <div className="input-box">
+                            <input type="text" name="" id="userBox" placeholder="First Name" onChange={this.setFirstName} />
+                            <span className="error">{this.state.errors.firstNameError == "*" ? "" : this.state.errors.firstNameError}</span>
+                        </div>
+                        <div className="input-box">
+                            <input type="text" name="" id="userBox" placeholder="Last Name" onChange={this.setLastName} />
+                            <span className="error">{this.state.errors.lastNameError == "*" ? "" : this.state.errors.lastNameError}</span>
+                        </div>
+                        <div className="input-box">
+                            <input type="password" name="" id="userBox" placeholder="Password" onChange={this.setPassword} />
+                            <span className="error">{this.state.errors.passwordError == "*" ? "" : this.state.errors.passwordError}</span>
+                        </div>
+                        <div className="input-box">
+                            <input type="password" name="" id="userBox" placeholder="Verify Password" onChange={this.verifyPasswordUser} />
+                            <span className="error">{this.state.errors.verifyPasswordError == "*" ? "" : this.state.errors.verifyPasswordError}</span>
+                        </div>
+                        <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.register}>Sign up</Button>
+
+                    </form>
+                    <NavLink className="navigate" to="/login" exact>Do you have an account? <br /> Sign in now</NavLink>
 
                 </div>
             </div>

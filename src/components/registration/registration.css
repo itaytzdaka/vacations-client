@@ -1,36 +1,42 @@
 .registration{
-    text-align: center;
-    min-height: 100%;
+    height: 100vh;
     background-image: linear-gradient(180deg, rgb(185, 21, 122),rgb(0, 18, 180));
+    text-align: center;
 }
-.cardRegistration{
-    display: inline-block;
-    margin-top: 100px;
-    background-color: white;
-    height: 500px;
-    width: 350px;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    border-radius: 2px;
+.card-registration{
+    /* display: block !important;
+    margin: auto; */
+    
 }
 
-.cardLogIn>h1{
-    margin: 50px 0 30px 0;
+.card-registration>h1{
+    margin-bottom: 20px;
+    text-align: center;
 }
 
-.cardLogIn>button{
-    width: 30%;
-    height: 5%;
-}
-
-.cardLogIn input{
+.card-registration>button{
     display: block;
-    margin: 20px auto;
+    margin: auto;
+    padding: 5px 10px;
+}
+
+.card-registration input{
+    display: block;
+    margin: auto;
     height: 5%;
+    width: 100%;
+}
+
+.error{
+    font-size: 0.8rem;
+    position: absolute;
+    color: red !important;
+    /* transform: translate(-50%,0); */
+}
+
+.input-box{
     width: 60%;
+    margin: 25px auto;
+    text-align: left;
 }
 
-.navigateLogin{
-    display: block;
-    margin-top: 100px;
-    color: gray;
-}

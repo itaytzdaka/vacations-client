@@ -30,7 +30,6 @@ html, body,#root{
 
     .card-container{
       width: 95%;
-      justify-content:space-evenly;
     }
 
     .card{
@@ -48,6 +47,8 @@ html, body,#root{
     :root {
       font-size: 0.8rem;
     }
+
+  
   }
   
   /* from 520px to 767px */
@@ -55,6 +56,11 @@ html, body,#root{
     :root {
       font-size: 0.75rem;
     }
+
+    .card-container{
+      justify-content:space-evenly;
+    }
+
 
   }
   
@@ -67,6 +73,13 @@ html, body,#root{
     .card-Container{
       width: 98%;
     }
+
+    .card-login {
+      height: 60% !important;
+      width: 80% !important;
+    }  
+
+
   }
 
   @media only screen and (max-width: 480px) {
