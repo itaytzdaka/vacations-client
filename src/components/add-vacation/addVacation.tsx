@@ -183,7 +183,6 @@ export class AddVacation extends Component<any, VacationState>{
             addedVacation.follows = 0;
             addedVacation.startingDate = StringToJson(addedVacation.startingDate);
             addedVacation.endingDate = StringToJson(addedVacation.endingDate);
-            console.log(addedVacation);
             store.dispatch({ type: ActionType.addOneVacation, payload: addedVacation });
             this.socket.emit("Admin-added-a-vacation-from-client", addedVacation);
             this.props.history.push("/admin");

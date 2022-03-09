@@ -69,17 +69,6 @@ export class Purchase extends Component<any, VacationState>{
             this.setState({ vacations });
         });
 
-        //if there is no token, link to the login page
-        // if (!sessionStorage.getItem("token") || !sessionStorage.getItem("user")) {
-        //     this.props.history.push("/login");
-        //     return;
-        // }
-
-        //if user is not admin, link to the Home page
-        // else if (!JSON.parse(sessionStorage.getItem("user")).isAdmin) {
-        //     this.props.history.push("/");
-        // }
-
 
         try {
             let vacation;
@@ -106,17 +95,14 @@ export class Purchase extends Component<any, VacationState>{
             vacation.startingDate = JsonToString(vacation.startingDate);
             vacation.endingDate = JsonToString(vacation.endingDate);
             this.setState({ vacation });
-            // console.log("this.state.vacation");
-            // console.log(this.state.vacation);
-            // console.log(vacation);
+
 
             const purchase = { ...this.state.purchase };
             purchase.vacationId = vacation.vacationId;
             purchase.userName = JSON.parse(sessionStorage.getItem("user")).userName;
             purchase.priceForTicket = vacation.price;
             this.setState({ purchase });
-            console.log("this.state.purchase");
-            console.log(this.state.purchase);
+
         }
 
         catch (err) {
@@ -140,107 +126,15 @@ export class Purchase extends Component<any, VacationState>{
         this.unsubscribeStore();
     }
 
-    //get the data from inputs to the state
-    // public setDescription = (args: ChangeEvent<HTMLInputElement>) => {
-    //     const description = args.target.value;
-    //     let nameError;
-
-    //     nameError = validateDescription(description);
-
-    //     const errors = { ...this.state.errors };
-    //     errors.descriptionError = nameError;
-    //     this.setState({ errors });
-
-    //     const vacation = { ...this.state.vacation };
-    //     vacation.description = description;
-    //     this.setState({ vacation });
-    // }
-    // public setDestination = (args: ChangeEvent<HTMLInputElement>) => {
-    //     const destination = args.target.value;
-    //     let nameError;
-
-    //     nameError = validateDestination(destination);
-
-    //     const errors = { ...this.state.errors };
-    //     errors.destinationError = nameError;
-    //     this.setState({ errors });
-
-    //     const vacation = { ...this.state.vacation };
-    //     vacation.destination = destination;
-    //     this.setState({ vacation });
-    // }
-
-    // public setImgUrl = (args: ChangeEvent<HTMLInputElement>) => {
-    //     const img = args.target.value;
-    //     let nameError;
-
-    //     nameError = validateImgUrl(img);
-
-    //     const errors = { ...this.state.errors };
-    //     errors.imgError = nameError;
-    //     this.setState({ errors });
-
-    //     const vacation = { ...this.state.vacation };
-    //     vacation.img = img;
-    //     this.setState({ vacation });
-    // }
-    // public setStartingDate = (args: ChangeEvent<HTMLInputElement>) => {
-    //     const startingDate = args.target.value;
-    //     let nameError;
-
-    //     nameError = validateStartingDate(startingDate);
-
-    //     const errors = { ...this.state.errors };
-    //     errors.startingDateError = nameError;
-    //     this.setState({ errors });
-
-    //     const vacation = { ...this.state.vacation };
-    //     // vacation.startingDate=new Date(startingDate).toJSON();
-    //     vacation.startingDate = startingDate;
-    //     this.setState({ vacation });
-    // }
-    // public setEndingDate = (args: ChangeEvent<HTMLInputElement>) => {
-    //     const endingDate = args.target.value;
-    //     let nameError;
-
-    //     nameError = validateEndingDate(endingDate);
-
-    //     const errors = { ...this.state.errors };
-    //     errors.endingDateError = nameError;
-    //     this.setState({ errors });
-
-    //     const vacation = { ...this.state.vacation };
-    //     // vacation.endingDate = new Date(endingDate).toJSON();
-    //     vacation.endingDate = endingDate;
-    //     this.setState({ vacation });
-    // }
 
     private setAmountOfTickets = (args: ChangeEvent<HTMLInputElement>) => {
-        console.log("this.state.purchase");
-        console.log(this.state.purchase);
 
         const purchase = { ...this.state.purchase };
         purchase.tickets = +args.target.value;
         purchase.totalPrice = purchase.tickets * this.state.vacation.price;
-        // console.log(purchase);
 
-        // const vacation = { ...this.state.vacation };
-        // const totalPrice= numberOfTickets*vacation.price;
         this.setState({ purchase });
-        console.log("this.state.purchase");
-        console.log(this.state.purchase);
 
-        // this.state.numberOfTickets=amount;
-        // let nameError;
-        // nameError = validatePrice(price);
-
-        // const errors = { ...this.state.errors };
-        // errors.priceError = nameError;
-        // this.setState({ errors });
-
-        // const vacation = { ...this.state.vacation };
-        // vacation.price = price;
-        // this.setState({ vacation });
     }
 
     private isFormLegal() {
@@ -251,60 +145,18 @@ export class Purchase extends Component<any, VacationState>{
         return true;
     }
 
-    // public update = async () => {
-    //     try {
-    //         const vacationToUpdate = { ...this.state.vacation }
-    //         console.log(vacationToUpdate);
-    //         console.log(Config.serverUrl);
-    //         await axios.put(`${Config.serverUrl}/api/vacations/${+this.props.match.params.id}`,
-    //             vacationToUpdate);
-    //         console.log("after axios");
-    //         vacationToUpdate.startingDate = StringToJson(vacationToUpdate.startingDate);
-    //         vacationToUpdate.endingDate = StringToJson(vacationToUpdate.endingDate);
-    //         store.dispatch({ type: ActionType.saveOneVacation, payload: vacationToUpdate });
-    //         this.socket.emit("Admin-updated-a-vacation-from-client", vacationToUpdate);
-    //         this.props.history.push("/admin");
-    //     }
-
-    //     catch (err) {
-    //         console.log("err");
-    //         console.log(err);
-    //         if (err.response.data === "Your login session has expired") {
-    //             sessionStorage.clear();
-    //             alert(err.response.data);
-    //             this.props.history.push("/login");
-    //             return;
-    //         }
-
-    //         else if (err.response.data === "You are not admin!") {
-    //             this.props.history.push("/login");
-    //             return;
-    //         }
-
-    //         else {
-    //             alert(err);
-    //         }
-    //     }
-    // }
 
     private send = async () => {
         try {
             const dateNow = new Date();
             let purchase = { ...this.state.purchase };
             purchase.date = dateNow;
-            console.log("send")
-            console.log("purchase");
-            console.log(purchase);
+
             const response = await axios.post<PurchaseModel>(Config.serverUrl + "/api/purchases",
                 purchase);
-            console.log("response.data");
-            console.log(response.data);
             purchase = response.data;
             this.props.history.push("/");
 
-            // console.log(response);
-            // console.log("purchase");
-            // console.log(purchase);
         }
         catch (err) {
             console.log(err);

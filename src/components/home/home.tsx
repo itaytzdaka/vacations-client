@@ -161,11 +161,11 @@ export class Home extends Component<any, VacationsState>{
     }
 
     //disconnect from the server and the store
-    /*
+    
     public componentWillUnmount(): void {
-        this.unsubscribeStore();
-        this.socket.disconnect();
-    }*/
+        // this.unsubscribeStore();
+        // this.socket.disconnect();
+    }
 
 
 

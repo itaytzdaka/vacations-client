@@ -90,14 +90,12 @@ export class EditVacation extends Component<any, VacationState>{
             try {
                 const response = await
                     axios.get<VacationModel>(`${Config.serverUrl}/api/vacations/${+this.props.match.params.id}`);
-                // console.log(response);
                 vacation = response.data;
 
             }
 
 
             catch (err) {
-                console.log(err as AxiosError);
                 if ((err as AxiosError).response?.data === "Your login session has expired") {
                     sessionStorage.clear();
                     alert(err);
@@ -230,11 +228,8 @@ export class EditVacation extends Component<any, VacationState>{
     public update = async () => {
         try {
             const vacationToUpdate = { ...this.state.vacation }
-            console.log(vacationToUpdate);
-            console.log(Config.serverUrl);
             await axios.put(`${Config.serverUrl}/api/vacations/${+this.props.match.params.id}`,
                 vacationToUpdate);
-            console.log("after axios");
             vacationToUpdate.startingDate = StringToJson(vacationToUpdate.startingDate);
             vacationToUpdate.endingDate = StringToJson(vacationToUpdate.endingDate);
             store.dispatch({ type: ActionType.saveOneVacation, payload: vacationToUpdate });
@@ -243,8 +238,6 @@ export class EditVacation extends Component<any, VacationState>{
         }
 
         catch (err) {
-            console.log("err");
-            console.log(err);
             if ((err as AxiosError).response?.data === "Your login session has expired") {
                 sessionStorage.clear();
                 alert((err as AxiosError).response?.data);

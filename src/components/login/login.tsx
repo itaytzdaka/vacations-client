@@ -57,11 +57,13 @@ export class Login extends Component<any, UserState>{
         this.setState({ user });
     }
 
-    private login = async () => {
+    private login = async (e) => {
 
         try {
+            e.preventDefault();
             const response = await axios.post(Config.serverUrl + "/api/auth/login",
                 this.state.user);
+
             sessionStorage.setItem("user", JSON.stringify(response.data.user));
             sessionStorage.setItem("token", response.data.token);
 
@@ -105,13 +107,13 @@ export class Login extends Component<any, UserState>{
         return (
             <div className="login">
                 <div className="card-login">
-                    <form className="form-login" action="">
+                    <form className="form-login" onSubmit={this.login}>
                         <h1>Login</h1>
                         <input type="text" name="" id="userBox" placeholder="User Name" onChange={this.setUserName} />
                         <input type="password" name="" id="userBox" placeholder="Password" onChange={this.setPassword} />
                         <br />
                         {/* <button disabled={!this.isFormLegal()} onClick={this.login}>Login</button> */}
-                        <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.login}>
+                        <Button variant="primary" type="submit" disabled={!this.isFormLegal()} >
                             Login
                         </Button >
                     </form>
