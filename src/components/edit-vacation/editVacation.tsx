@@ -50,7 +50,7 @@ export class EditVacation extends Component<any, VacationState>{
 
 
         //create connection to the server
-        this.socket = io.connect("http://localhost:3000");
+         this.socket = io.connect(Config.serverUrl);
 
 
         //if is there any changes in the store get the vacations from the new store.

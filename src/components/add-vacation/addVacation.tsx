@@ -62,7 +62,7 @@ export class AddVacation extends Component<any, VacationState>{
         }
 
         //create connection to the server
-        this.socket = io.connect("http://localhost:3000");
+        this.socket = io.connect(Config.serverUrl);
     }
 
 
