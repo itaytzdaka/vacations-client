@@ -1,25 +1,36 @@
 import React, { Component } from "react";
 import "./home.css";
+
+//models
 import { VacationModel } from "../../models/vacation-model";
-import axios, { AxiosError } from "axios";
+import { FollowModel } from "../../models/follow-model";
+
+//server
+import axiosPrivate from "../../api/axios";
+import io from "socket.io-client";
+import { Config } from "../../config";
+
+//store
 import { Unsubscribe } from "redux";
 import { store } from "../../redux/store";
-import { FollowModel } from "../../models/follow-model";
 import { ActionType } from "../../redux/action-type";
+
+//components
 import Card from 'react-bootstrap/Card';
 import ListGroupItem from 'react-bootstrap/ListGroupItem';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { StarFill } from 'react-bootstrap-icons';
-import io from "socket.io-client";
-import { NavBar } from "../nav-bar/navBar";
-import { Config } from "../../config";
+import NavBar from "../nav-bar/navBar";
 import { NavLink } from "react-router-dom";
 
+//services
+import { errorHandling, isLoggedIn } from "../../services/auth"
 
 
 interface VacationsState {
     vacations: VacationModel[];
     follows: FollowModel[];
+    isLoggedIn: boolean; //for listener event
 }
 
 export class Home extends Component<any, VacationsState>{
@@ -33,140 +44,104 @@ export class Home extends Component<any, VacationsState>{
         //get vacations and follows from the store
         this.state = {
             vacations: store.getState().vacations,
-            follows: store.getState().follows
+            follows: store.getState().follows,
+            isLoggedIn: store.getState().isLoggedIn
         };
 
     }
 
 
-
     public async componentDidMount() {
 
-        //if there is no token, link to the login page
-        if (!sessionStorage.getItem("token") || !sessionStorage.getItem("user")) {
-            this.props.history.push("/login");
-            return;
-        }
-
+        if(!isLoggedIn(this.props)) return;
+        
         //create connection to the server
-         this.socket = io.connect(Config.serverUrl);
+        this.socket = io.connect(Config.serverUrl);
 
         //if is there any changes in the store get the vacations and the follows from the new store.
         this.unsubscribeStore = store.subscribe(() => {
             const vacations = store.getState().vacations;
             const follows = store.getState().follows;
-            this.setState({ vacations, follows });
+            const isLoggedIn = store.getState().isLoggedIn;
+            this.setState({ vacations, follows, isLoggedIn });
         });
 
         //if the store is empty, get the data with ajax
-        if (!(store.getState().follows.length > 0 && store.getState().vacations.length > 0)) {
-
-            try {
-                const response = await
-                    axios.get<VacationModel[]>(Config.serverUrl+"/api/vacations");
-                const vacations = response.data;
-
-                const response2 = await
-                    axios.get<FollowModel[]>(Config.serverUrl+"/api/follows");
-                const follows = response2.data;
-
-                store.dispatch({ type: ActionType.SaveAllFollows, payload: follows });
-                store.dispatch({ type: ActionType.SaveAllVacations, payload: vacations });
-                store.dispatch({ type: ActionType.PrepareVacationsForUser });
-            }
-
-            catch (err) {
-                if ((err as AxiosError).response?.data === "Your login session has expired") {
-                    sessionStorage.clear();
-                    this.props.history.push("/login");
-                    return;
-                }
-
-                else {
-                    alert(err);
-                }
-            }
-        }
-
-        //listen to actions from the server
-        this.socket.on("Admin-updated-a-vacation-from-server", vacationUpdated => {
-            store.dispatch({ type: ActionType.saveOneVacation, payload: vacationUpdated });
-        });
-        this.socket.on("added-vacation-from-server", vacationAdded => {
-            store.dispatch({ type: ActionType.addOneVacation, payload: vacationAdded });
-        });
-        this.socket.on("removed-vacation-from-server", vacationRemoved => {
-            store.dispatch({ type: ActionType.deleteOneVacation, payload: vacationRemoved });
-        });
-        this.socket.on("follows-updated-from-server", async () => {
-            const response2 = await
-                axios.get<FollowModel[]>(Config.serverUrl+"/api/follows");
-            const follows = response2.data;
-            store.dispatch({ type: ActionType.SaveAllFollows, payload: follows });
-            store.dispatch({ type: ActionType.PrepareVacationsForUser });
-        });
+        this.getComponentData();
 
     }
 
+    private getComponentData = async () => {
+        
+        try {
+            if (store.getState().vacations.length === 0) {
+                const response = await
+                    axiosPrivate.get<VacationModel[]>("/api/vacations");
+                const vacations = response.data;
+                store.dispatch({ type: ActionType.SaveAllVacations, payload: vacations });
+            }
 
+            if (store.getState().follows.length === 0) {
+                const response = await
+                    axiosPrivate.get<FollowModel[]>("/api/follows");
+                const follows = response.data;
+                store.dispatch({ type: ActionType.SaveAllFollows, payload: follows });
+                store.dispatch({ type: ActionType.setFollowsPerVacation });
+                store.dispatch({ type: ActionType.sortVacations });    
+            }
+        }
+
+        catch (err) {
+            console.log("home err")
+            console.log(err);
+            errorHandling(err, this.props);
+        }
+
+    }
 
     //add a follow for vacation in the database, and emit
     private addFollow = async (vacationId) => {
         const followToAdd = new FollowModel();
-        followToAdd.userName = JSON.parse(sessionStorage.getItem("user")).userName;
+        followToAdd.userName = store.getState().user.userName;
         followToAdd.vacationId = vacationId;
+
         try {
-            await axios.post<FollowModel>(Config.serverUrl+"/api/follows", followToAdd);
-            this.socket.emit("user-changed-a-follow-from-client");
+            const response = await axiosPrivate.post<FollowModel>("/api/follows", followToAdd);
+            if (response.data) {
+                const followAdded = response.data;
+                this.socket.emit("user-added-a-follow-from-client", followAdded);
+            }
         }
 
         catch (err) {
-            if ((err as AxiosError).response?.data === "Your login session has expired") {
-                sessionStorage.clear();
-                this.props.history.push("/login");
-                return;
-            }
-
-            else {
-                alert(err);
-            }
+            errorHandling(err, this.props);
         }
     }
 
-    //add a follow for vacation in the database, and emit
+    //remove a follow for vacation in the database, and emit
     private removeFollow = async (vacationId) => {
 
-        const userName = JSON.parse(sessionStorage.getItem("user")).userName;
+        const userName = store.getState().user.userName;
 
         const followToRemove = this.state.follows.find(f => {
             return f.userName === userName && f.vacationId === vacationId
         });
 
         try {
-            await axios.delete(`${Config.serverUrl}/api/follows/${followToRemove.followId}`);
-            this.socket.emit("user-changed-a-follow-from-client");
+            await axiosPrivate.delete(`/api/follows/${followToRemove.followId}`);
+            this.socket.emit("user-removed-a-follow-from-client", followToRemove.followId);
         }
 
         catch (err) {
-            if ((err as AxiosError).response?.data === "Your login session has expired") {
-                sessionStorage.clear();
-                this.props.history.push("/login");
-                return;
-            }
-
-            else {
-                alert(err);
-            }
+            errorHandling(err, this.props);
         }
     }
 
     //disconnect from the server and the store
-    
     public componentWillUnmount(): void {
-        // this.unsubscribeStore();
-        // this.socket.disconnect();
+        this.unsubscribeStore?.();
+        this.socket?.disconnect();
     }
-
 
 
     public render() {
@@ -178,8 +153,8 @@ export class Home extends Component<any, VacationsState>{
                     {this.state.vacations.map(v =>
 
 
-                        <Card   key={v.vacationId}>
-                            <Card.Img variant="top" className="img" src={"/assets/images/vacations/" + v.img} />
+                        <Card key={v.vacationId}>
+                            <Card.Img variant="top" className="img" src={Config.serverUrl + "/assets/images/vacations/" + v.img} />
                             <Card.Body>
                                 {v.isFollow ? <StarFill className="star-fill" color="yellow" size={"1.5rem"} onClick={() => this.removeFollow(v.vacationId)} /> : <StarFill className="star-fill" color="grey" size={"1.5rem"} onClick={() => this.addFollow(v.vacationId)} />}
 
@@ -193,7 +168,7 @@ export class Home extends Component<any, VacationsState>{
                                 <ListGroupItem>Start: {new Date(v.startingDate).toDateString()}</ListGroupItem>
                                 <ListGroupItem>end: {new Date(v.endingDate).toDateString()}</ListGroupItem>
                                 <ListGroupItem>Cost: {v.price}$</ListGroupItem>
-                                <ListGroupItem><NavLink className="purchase" to={"/purchase/"+v.vacationId} exact> purchase </NavLink></ListGroupItem>
+                                <ListGroupItem><NavLink className="purchase" to={"/purchase/" + v.vacationId} exact> purchase </NavLink></ListGroupItem>
                             </ListGroup>
                         </Card>
                     )}

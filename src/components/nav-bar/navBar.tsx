@@ -3,32 +3,28 @@ import "./navBar.css";
 import Button from 'react-bootstrap/Button';
 import { NavLink } from "react-router-dom";
 import { UserModel } from "../../models/user-model";
+import { store } from "../../redux/store";
+import { disconnect } from "../../services/auth"
+import { withRouter } from 'react-router-dom';
 
 interface userState {
     user: UserModel
 }
 
 
-export class NavBar extends Component<any, userState>{
+class NavBar extends Component<any, userState>{
 
     public constructor(props: any) {
         super(props);
 
         this.state = {
-            user: new UserModel()
+            user: store.getState().user
         }
     }
 
-    componentDidMount() {
-        if (sessionStorage.getItem("user")) {
-            const user = JSON.parse(sessionStorage.getItem("user"));
-            this.setState({ user });
-        }
-
-    }
-
-    private logOut() {
-        sessionStorage.clear();
+    private logOut =async () => {
+        await disconnect();
+        this.props.history.push("/login");
     }
 
     public render() {
@@ -36,7 +32,7 @@ export class NavBar extends Component<any, userState>{
             <div className="nav-bar">
                 <div className="nav-container">
                     <nav>
-                        {this.state.user.isAdmin ? (
+                        {this.state.user?.isAdmin ? (
                             <ul>
                                 <li>
                                     <NavLink to="/" exact>Home</NavLink>
@@ -63,12 +59,10 @@ export class NavBar extends Component<any, userState>{
 
                         }
                         <div className="user">
-                            <div> Hello {this.state.user.userName} </div>
+                            <div> Hello {this.state.user?.userName} </div>
 
                             <div>
-                                <NavLink to="/login" exact>
-                                    <Button onClick={this.logOut}>Log out</Button>
-                                </NavLink>
+                                <Button onClick={this.logOut}>Log out</Button>
                             </div>
                         </div>
 
@@ -86,3 +80,5 @@ export class NavBar extends Component<any, userState>{
         )
     }
 }
+
+export default withRouter(NavBar);

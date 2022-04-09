@@ -1,9 +1,18 @@
 import React, { Component, ChangeEvent } from "react";
 import "./addVacation.css";
+
+//server
+import axiosPrivate from "../../api/axios";
+import io from "socket.io-client";
+import { Config } from "../../config";
+
+//models
 import { VacationModel } from "../../models/vacation-model";
-import axios, { AxiosError } from "axios";
+
+//store
 import { store } from "../../redux/store";
-import { ActionType } from "../../redux/action-type";
+
+//validation
 import {
     validateDescription,
     validateDestination,
@@ -12,16 +21,21 @@ import {
     validateEndingDate,
     validatePrice
 } from "../../services/vacation-validation";
+
+//components
+import NavBar from "../nav-bar/navBar";
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import io from "socket.io-client";
-import { NavBar } from "../nav-bar/navBar";
+
+//services
 import { StringToJson } from "../../services/date";
-import { Config } from "../../config";
+import { errorHandling, isLoggedIn, isAdmin, } from "../../services/auth"
 
 
 interface VacationState {
     vacation: VacationModel;
+    isLoggedIn: boolean;
+    file: any;
     errors: {
         descriptionError: string,
         destinationError: string,
@@ -42,6 +56,8 @@ export class AddVacation extends Component<any, VacationState>{
 
         this.state = {
             vacation: new VacationModel(),
+            isLoggedIn: store.getState().isLoggedIn,
+            file: null,
             errors: { descriptionError: "*", destinationError: "*", imgError: "*", startingDateError: "*", endingDateError: "*", priceError: "*" }
 
         };
@@ -49,22 +65,12 @@ export class AddVacation extends Component<any, VacationState>{
 
 
     public async componentDidMount() {
-
-        //if there is no token, link to the login page
-        if (!sessionStorage.getItem("token") || !sessionStorage.getItem("user")) {
-            this.props.history.push("/login");
-            return;
-        }
-
-        //if user is not admin, link to the Home page
-        else if (!JSON.parse(sessionStorage.getItem("user")).isAdmin) {
-            this.props.history.push("/");
-        }
+        if(!isLoggedIn(this.props)) return;
+        if(!isAdmin(this.props)) return;
 
         //create connection to the server
         this.socket = io.connect(Config.serverUrl);
     }
-
 
 
     //get the data from inputs to the state
@@ -100,11 +106,18 @@ export class AddVacation extends Component<any, VacationState>{
         this.setState({ vacation });
     }
 
+    private onFileChange = (args: ChangeEvent<HTMLInputElement>) => {
+        const file = args.target.files[0];
+        if (file) {
+            this.setImgUrl(file.name);
+            this.setState({ file });
+        }
+    }
 
-    private setImgUrl = (args: ChangeEvent<HTMLInputElement>) => {
-        const img = args.target.value;
+
+    private setImgUrl = (fileName: string) => {
+        const img = fileName;
         let nameError;
-
 
         nameError = validateImgUrl(img);
 
@@ -174,43 +187,46 @@ export class AddVacation extends Component<any, VacationState>{
         return true;
     }
 
+
+
     //add a new vacation, to database and store, emit, and redirect to /login
     private add = async () => {
+
+        const vacation = { ...this.state.vacation };
+
+        const formData = new FormData();
+        formData.append(
+
+            "file",
+            this.state.file
+        );
+
         try {
-            const response = await axios.post<VacationModel>(Config.serverUrl + "/api/vacations",
-                this.state.vacation);
+
+            //upload vacation image
+            await axiosPrivate.post("/upload-image", formData);
+
+            //add vacation
+            const response = await axiosPrivate.post<VacationModel>("/api/vacations",
+                vacation);
             const addedVacation = response.data;
+
             addedVacation.follows = 0;
             addedVacation.startingDate = StringToJson(addedVacation.startingDate);
             addedVacation.endingDate = StringToJson(addedVacation.endingDate);
-            store.dispatch({ type: ActionType.addOneVacation, payload: addedVacation });
+
             this.socket.emit("Admin-added-a-vacation-from-client", addedVacation);
             this.props.history.push("/admin");
 
         }
         catch (err) {
-            if ((err as AxiosError).response?.data === "Your login session has expired") {
-                // alert(err.response.data);
-                sessionStorage.clear();
-                alert((err as AxiosError).response?.data);
-                this.props.history.push("/login");
-                return;
-            }
-
-            else if ((err as AxiosError).response?.data === "You are not admin!") {
-                this.props.history.push("/login");
-                return;
-            }
-
-            else {
-                alert(err);
-            }
+            errorHandling(err, this.props);
         }
     }
 
     //disconnect from the server
     public componentWillUnmount(): void {
-        this.socket.disconnect();
+        this.socket?.disconnect();
     }
 
     public render() {
@@ -221,51 +237,48 @@ export class AddVacation extends Component<any, VacationState>{
                 <div className="edit-container">
                     <h1>Add Vacation</h1>
                     <br />
-                    <Form.Group controlId="formBasicText">
+                    <Form.Group controlId="formTextDestination">
                         <Form.Label>Destination</Form.Label>
                         <Form.Control type="text" placeholder="Enter destination" value={this.state.vacation.destination || ""} onChange={this.setDestination} />
                         <Form.Text className="text-muted">
-                            {this.state.errors.destinationError=="*"? "" : this.state.errors.destinationError }
+                            {this.state.errors.destinationError === "*" ? "" : this.state.errors.destinationError}
                         </Form.Text>
                     </Form.Group>
 
-                    <Form.Group controlId="formBasicText">
+                    <Form.Group controlId="formTextDescription">
                         <Form.Label>Description</Form.Label>
                         <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.description || ""} onChange={this.setDescription} />
                         <Form.Text className="text-muted">
-                            {this.state.errors.descriptionError=="*"? "" : this.state.errors.descriptionError}
+                            {this.state.errors.descriptionError === "*" ? "" : this.state.errors.descriptionError}
                         </Form.Text>
                     </Form.Group>
 
-                    <Form.Group controlId="formBasicText">
-                        <Form.Label>Image URL</Form.Label>
-                        <Form.Control type="text" placeholder="Enter img" value={this.state.vacation.img || ""} onChange={this.setImgUrl} />
-                        <Form.Text className="text-muted">
-                            {this.state.errors.imgError=="*"? "" : this.state.errors.imgError}
-                        </Form.Text>
+                    <Form.Group controlId="formFileImage">
+                        <Form.Label>Upload image</Form.Label>
+                        <Form.Control type="file" name="file" onChange={this.onFileChange} />
                     </Form.Group>
 
-                    <Form.Group controlId="formBasicText">
+                    <Form.Group controlId="formStartDate">
                         <Form.Label>Start Date</Form.Label>
                         <Form.Control type="date" value={this.state.vacation.startingDate || ""} onChange={this.setStartingDate} />
                         <Form.Text className="text-muted">
-                            {this.state.errors.startingDateError=="*"? "" : this.state.errors.startingDateError}
+                            {this.state.errors.startingDateError === "*" ? "" : this.state.errors.startingDateError}
                         </Form.Text>
                     </Form.Group>
 
-                    <Form.Group controlId="formBasicText">
+                    <Form.Group controlId="formEndingDate">
                         <Form.Label>Ending Date</Form.Label>
                         <Form.Control type="date" value={this.state.vacation.endingDate || ""} onChange={this.setEndingDate} />
                         <Form.Text className="text-muted">
-                            {this.state.errors.endingDateError=="*"? "" : this.state.errors.endingDateError}
+                            {this.state.errors.endingDateError === "*" ? "" : this.state.errors.endingDateError}
                         </Form.Text>
                     </Form.Group>
 
-                    <Form.Group controlId="formBasicText">
+                    <Form.Group controlId="formTextPrice">
                         <Form.Label>Price</Form.Label>
                         <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.price || ""} onChange={this.setPrice} />
                         <Form.Text className="text-muted">
-                            {this.state.errors.priceError=="*"? "" : this.state.errors.priceError}
+                            {this.state.errors.priceError === "*" ? "" : this.state.errors.priceError}
                         </Form.Text>
                     </Form.Group>
 

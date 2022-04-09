@@ -26,20 +26,21 @@ nav ul{
     display: flex;
     align-items: inherit;
     margin: 0;
-    flex: 1;
+    /* flex: 1; */
     justify-content: space-between;
 }
 
 ul li{
     list-style: none;
     flex-shrink: 0;
+    margin-right: 10%;
 }
 
 .user{
     display: flex;
     align-items: inherit;
-    justify-content: end;
-    flex: 1.7;
+    justify-content: flex-end;
+    /* flex: 1.7; */
 }
 
 .user div{

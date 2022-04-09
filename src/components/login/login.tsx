@@ -1,12 +1,26 @@
 import React, { Component, ChangeEvent } from "react";
 import "./login.css";
-import { NavLink } from "react-router-dom";
-import axios, { AxiosError } from "axios";
-import { UserModel } from "../../models/user-model";
-import { validateUserName, validatePassword } from "../../services/user-validation";
-import { Config } from "../../config";
-import Button from 'react-bootstrap/Button';
 
+//server
+import axios from "../../api/axios";
+
+//models
+import { UserModel } from "../../models/user-model";
+
+//validation
+import { validateUserName, validatePassword } from "../../services/user-validation";
+
+//components
+import Button from 'react-bootstrap/Button';
+import { NavLink } from "react-router-dom";
+
+//services
+import Cookies from 'universal-cookie';
+import { errorHandling } from "../../services/auth"
+
+//store
+import { store } from "../../redux/store";
+import { ActionType } from "../../redux/action-type";
 
 
 interface UserState {
@@ -26,6 +40,16 @@ export class Login extends Component<any, UserState>{
             errors: { userNameError: "*", passwordError: "*" }
 
         };
+    }
+
+    public componentDidMount() {
+        console.log("login componentDidMount");
+
+        //if the user is logged in, navigate to Home page
+        if (store.getState().user) {
+            this.props.history.push("/");
+            return;
+        }
     }
 
     private setUserName = (args: ChangeEvent<HTMLInputElement>) => {
@@ -57,33 +81,6 @@ export class Login extends Component<any, UserState>{
         this.setState({ user });
     }
 
-    private login = async (e) => {
-
-        try {
-            e.preventDefault();
-            const response = await axios.post(Config.serverUrl + "/api/auth/login",
-                this.state.user);
-
-            sessionStorage.setItem("user", JSON.stringify(response.data.user));
-            sessionStorage.setItem("token", response.data.token);
-
-            this.props.history.push("/");
-        }
-
-        catch (err) {
-            if ((err as AxiosError).response?.data === "Illegal username or password") {
-                alert((err as AxiosError).response?.data);
-                return;
-            }
-
-            else {
-                alert(err);
-            }
-        }
-
-
-    }
-
     //check if the form is legal
     private isFormLegal = () => {
         for (const prop in this.state.errors) {
@@ -95,13 +92,27 @@ export class Login extends Component<any, UserState>{
     }
 
 
-    public componentDidMount() {
-        //if the user is logged in, navigate to Home page
-        if (sessionStorage.getItem("token") && JSON.parse(sessionStorage.getItem("user"))) {
+    private login = async (e) => {
+
+        try {
+            e.preventDefault();
+            const response = await axios.post("/api/auth/login",
+                this.state.user, { withCredentials: true });
+
+            store.dispatch({ type: ActionType.saveUser, payload: response.data.user });
+            store.dispatch({ type: ActionType.saveToken, payload: response.data.accessToken });
+
+            const cookies = new Cookies();
+            cookies.set('user', response.data.user, { path: '/', maxAge: 24 * 60 * 60 });
+
             this.props.history.push("/");
-            return;
+        }
+
+        catch (err) {
+            errorHandling(err, this.props);
         }
     }
+
 
     public render() {
         return (
@@ -112,7 +123,6 @@ export class Login extends Component<any, UserState>{
                         <input type="text" name="" id="userBox" placeholder="User Name" onChange={this.setUserName} />
                         <input type="password" name="" id="userBox" placeholder="Password" onChange={this.setPassword} />
                         <br />
-                        {/* <button disabled={!this.isFormLegal()} onClick={this.login}>Login</button> */}
                         <Button variant="primary" type="submit" disabled={!this.isFormLegal()} >
                             Login
                         </Button >

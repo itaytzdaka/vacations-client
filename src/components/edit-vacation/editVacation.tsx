@@ -1,22 +1,38 @@
 import React, { Component, ChangeEvent } from "react";
 import "./editVacation.css";
+
+//models
 import { VacationModel } from "../../models/vacation-model";
-import axios, { AxiosError } from "axios";
+
+//store
 import { Unsubscribe } from "redux";
 import { store } from "../../redux/store";
+
+//services
 import { JsonToString } from "../../services/date";
 import { StringToJson } from "../../services/date";
+import { errorHandling, isLoggedIn, isAdmin } from "../../services/auth"
+
+//validations
 import { validateDescription, validateDestination, validateImgUrl, validateStartingDate, validateEndingDate, validatePrice } from "../../services/vacation-validation";
+
+//components
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import NavBar from "../nav-bar/navBar";
+
+//server
 import io from "socket.io-client";
-import { NavBar } from "../nav-bar/navBar";
-import { ActionType } from "../../redux/action-type";
 import { Config } from "../../config";
+import axiosPrivate from "../../api/axios";
+
+
 
 interface VacationState {
     vacations: VacationModel[];
     vacation: VacationModel;
+    isLoggedIn: boolean; //for listener event
+    file: any;
     errors: {
         descriptionError: string,
         destinationError: string,
@@ -35,53 +51,41 @@ export class EditVacation extends Component<any, VacationState>{
     public constructor(props: any) {
         super(props);
 
-        //get vacations from the store
+        //get vacations and login status from the store
         this.state = {
             vacations: store.getState().vacations,
             vacation: {},
+            isLoggedIn: store.getState().isLoggedIn,
+            file: null,
             errors: { descriptionError: "", destinationError: "", imgError: "", startingDateError: "", endingDateError: "", priceError: "" }
         };
 
     }
 
 
-
     public async componentDidMount() {
 
+        if(!isLoggedIn(this.props)) return;
+        if(!isAdmin(this.props)) return;
 
         //create connection to the server
-         this.socket = io.connect(Config.serverUrl);
-
+        this.socket = io.connect(Config.serverUrl);
 
         //if is there any changes in the store get the vacations from the new store.
         this.unsubscribeStore = store.subscribe(() => {
             const vacations = store.getState().vacations;
-            this.setState({ vacations });
+            const isLoggedIn = store.getState().isLoggedIn;
+            this.setState({ vacations, isLoggedIn });
         });
-
-        //if there is no token, link to the login page
-        if (!sessionStorage.getItem("token") || !sessionStorage.getItem("user")) {
-            this.props.history.push("/login");
-            return;
-        }
-
-        //if user is not admin, link to the Home page
-        else if (!JSON.parse(sessionStorage.getItem("user")).isAdmin) {
-            this.props.history.push("/");
-        }
-
-
 
         let vacation;
 
         //if the store is not empty, find the vacation for edit and don't use axios at all
         if (this.state.vacations.length > 0) {
-
             for (let v of this.state.vacations) {
                 if (v.vacationId === +this.props.match.params.id) {
                     vacation = ({ ...v });
                 }
-
             }
         }
 
@@ -89,42 +93,21 @@ export class EditVacation extends Component<any, VacationState>{
         else {
             try {
                 const response = await
-                    axios.get<VacationModel>(`${Config.serverUrl}/api/vacations/${+this.props.match.params.id}`);
+                    axiosPrivate.get<VacationModel>(`/api/vacations/${+this.props.match.params.id}`);
                 vacation = response.data;
-
             }
-
 
             catch (err) {
-                if ((err as AxiosError).response?.data === "Your login session has expired") {
-                    sessionStorage.clear();
-                    alert(err);
-                    // this.props.history.push("/login");
-                    return;
-                }
-
-                else {
-                    alert((err as AxiosError).response?.data);
-                }
-
+                errorHandling(err, this.props);
             }
-
-
-
         }
 
         //treatment with json date format
         vacation.startingDate = JsonToString(vacation.startingDate);
         vacation.endingDate = JsonToString(vacation.endingDate);
         this.setState({ vacation });
-
     }
 
-    //disconnect from the server and the store
-    public componentWillUnmount(): void {
-        this.unsubscribeStore();
-        this.socket.disconnect();
-    }
 
     //get the data from inputs to the state
     public setDescription = (args: ChangeEvent<HTMLInputElement>) => {
@@ -141,6 +124,7 @@ export class EditVacation extends Component<any, VacationState>{
         vacation.description = description;
         this.setState({ vacation });
     }
+
     public setDestination = (args: ChangeEvent<HTMLInputElement>) => {
         const destination = args.target.value;
         let nameError;
@@ -156,8 +140,14 @@ export class EditVacation extends Component<any, VacationState>{
         this.setState({ vacation });
     }
 
-    public setImgUrl = (args: ChangeEvent<HTMLInputElement>) => {
-        const img = args.target.value;
+    private onFileChange = (args: ChangeEvent<HTMLInputElement>) => {
+        const file = args.target.files[0];
+        this.setImgUrl(file.name);
+        this.setState({ file });
+    }
+
+    private setImgUrl = (fileName: string) => {
+        const img = fileName;
         let nameError;
 
         nameError = validateImgUrl(img);
@@ -170,6 +160,7 @@ export class EditVacation extends Component<any, VacationState>{
         vacation.img = img;
         this.setState({ vacation });
     }
+
     public setStartingDate = (args: ChangeEvent<HTMLInputElement>) => {
         const startingDate = args.target.value;
         let nameError;
@@ -181,10 +172,10 @@ export class EditVacation extends Component<any, VacationState>{
         this.setState({ errors });
 
         const vacation = { ...this.state.vacation };
-        // vacation.startingDate=new Date(startingDate).toJSON();
         vacation.startingDate = startingDate;
         this.setState({ vacation });
     }
+
     public setEndingDate = (args: ChangeEvent<HTMLInputElement>) => {
         const endingDate = args.target.value;
         let nameError;
@@ -196,7 +187,6 @@ export class EditVacation extends Component<any, VacationState>{
         this.setState({ errors });
 
         const vacation = { ...this.state.vacation };
-        // vacation.endingDate = new Date(endingDate).toJSON();
         vacation.endingDate = endingDate;
         this.setState({ vacation });
     }
@@ -225,37 +215,39 @@ export class EditVacation extends Component<any, VacationState>{
         return true;
     }
 
+
     public update = async () => {
         try {
+            
+            if (this.state.file){
+                const formData = new FormData();
+                formData.append(
+                    "file",
+                    this.state.file
+                );
+                await axiosPrivate.post("/upload-image", formData);
+            }
+
             const vacationToUpdate = { ...this.state.vacation }
-            await axios.put(`${Config.serverUrl}/api/vacations/${+this.props.match.params.id}`,
+            await axiosPrivate.put(`/api/vacations/${+this.props.match.params.id}`,
                 vacationToUpdate);
+
             vacationToUpdate.startingDate = StringToJson(vacationToUpdate.startingDate);
             vacationToUpdate.endingDate = StringToJson(vacationToUpdate.endingDate);
-            store.dispatch({ type: ActionType.saveOneVacation, payload: vacationToUpdate });
             this.socket.emit("Admin-updated-a-vacation-from-client", vacationToUpdate);
             this.props.history.push("/admin");
         }
 
         catch (err) {
-            if ((err as AxiosError).response?.data === "Your login session has expired") {
-                sessionStorage.clear();
-                alert((err as AxiosError).response?.data);
-                this.props.history.push("/login");
-                return;
-            }
-
-            else if ((err as AxiosError).response?.data === "You are not admin!") {
-                this.props.history.push("/login");
-                return;
-            }
-
-            else {
-                alert(err);
-            }
+            errorHandling(err, this.props);
         }
     }
 
+    //disconnect from the server and the store
+    public componentWillUnmount(): void {
+        this.unsubscribeStore?.();
+        this.socket?.disconnect();
+    }
 
     public render() {
         return (
@@ -264,60 +256,54 @@ export class EditVacation extends Component<any, VacationState>{
                 <div className="form-container">
                     <h1>Edit Vacation</h1>
                     <br />
-                    <Form>
+                    <Form.Group controlId="formTextDestination">
+                        <Form.Label>Destination</Form.Label>
+                        <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.destination || ""} onChange={this.setDestination} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.destinationError}
+                        </Form.Text>
+                    </Form.Group>
 
-                        <Form.Group controlId="formBasicText">
-                            <Form.Label>Destination</Form.Label>
-                            <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.destination || ""} onChange={this.setDestination} />
-                            <Form.Text className="text-muted">
-                                {this.state.errors.destinationError}
-                            </Form.Text>
-                        </Form.Group>
+                    <Form.Group controlId="formTextDescription">
+                        <Form.Label>Description</Form.Label>
+                        <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.description || ""} onChange={this.setDescription} />
+                        <Form.Text className="text-muted" >
+                            {this.state.errors.descriptionError}
+                        </Form.Text>
+                    </Form.Group>
 
-                        <Form.Group controlId="formBasicText">
-                            <Form.Label>Description</Form.Label>
-                            <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.description || ""} onChange={this.setDescription} />
-                            <Form.Text className="text-muted" >
-                                {this.state.errors.descriptionError}
-                            </Form.Text>
-                        </Form.Group>
+                    <Form.Group controlId="formFileImage">
+                        <Form.Label>Upload image</Form.Label>
+                        <Form.Control type="file" name="file" onChange={this.onFileChange} />
+                    </Form.Group>
 
-                        <Form.Group controlId="formBasicText">
-                            <Form.Label>Image URL</Form.Label>
-                            <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.img || ""} onChange={this.setImgUrl} />
-                            <Form.Text className="text-muted" >
-                                {this.state.errors.imgError}
-                            </Form.Text>
-                        </Form.Group>
+                    <Form.Group controlId="formStartDate">
+                        <Form.Label>Start Date</Form.Label>
+                        <Form.Control type="date" placeholder="Enter description" value={this.state.vacation.startingDate || ""} onChange={this.setStartingDate} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.startingDateError}
+                        </Form.Text>
+                    </Form.Group>
 
-                        <Form.Group controlId="formBasicText">
-                            <Form.Label>Start Date</Form.Label>
-                            <Form.Control type="date" placeholder="Enter description" value={this.state.vacation.startingDate || ""} onChange={this.setStartingDate} />
-                            <Form.Text className="text-muted">
-                                {this.state.errors.startingDateError}
-                            </Form.Text>
-                        </Form.Group>
+                    <Form.Group controlId="formEndingDate">
+                        <Form.Label>Ending Date</Form.Label>
+                        <Form.Control type="date" placeholder="Enter description" value={this.state.vacation.endingDate || ""} onChange={this.setEndingDate} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.endingDateError}
+                        </Form.Text>
+                    </Form.Group>
 
-                        <Form.Group controlId="formBasicText">
-                            <Form.Label>Ending Date</Form.Label>
-                            <Form.Control type="date" placeholder="Enter description" value={this.state.vacation.endingDate || ""} onChange={this.setEndingDate} />
-                            <Form.Text className="text-muted">
-                                {this.state.errors.endingDateError}
-                            </Form.Text>
-                        </Form.Group>
+                    <Form.Group controlId="formTextPrice">
+                        <Form.Label>Price</Form.Label>
+                        <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.price || ""} onChange={this.setPrice} />
+                        <Form.Text className="text-muted">
+                            {this.state.errors.priceError}
+                        </Form.Text>
+                    </Form.Group>
 
-                        <Form.Group controlId="formBasicText">
-                            <Form.Label>Price</Form.Label>
-                            <Form.Control type="text" placeholder="Enter description" value={this.state.vacation.price || ""} onChange={this.setPrice} />
-                            <Form.Text className="text-muted">
-                                {this.state.errors.priceError}
-                            </Form.Text>
-                        </Form.Group>
-
-                        <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.update}>
-                            Submit
-                        </Button >
-                    </Form>
+                    <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.update}>
+                        Submit
+                    </Button >
                 </div>
 
             </div>

@@ -1,124 +1,104 @@
-import React, { Component, ChangeEvent } from "react";
+import React, { Component } from "react";
 import "./purchases.css";
-import { PurchaseModel } from "../../models/purchase-model";
 
-import axios from "axios";
+//server
+import axiosPrivate from "../../api/axios";
+import io from "socket.io-client";
+import { Config } from "../../config";
 
+//store
 import { Unsubscribe } from "redux";
 import { store } from "../../redux/store";
 import { ActionType } from "../../redux/action-type";
 
-import { NavBar } from "../nav-bar/navBar";
-import { JsonToString } from "../../services/date";
-import { StringToJson } from "../../services/date";
-import Card from 'react-bootstrap/Card';
-
-import Button from 'react-bootstrap/Button';
-import Form from 'react-bootstrap/Form';
+//components
+import NavBar from "../nav-bar/navBar";
 import Table from 'react-bootstrap/Table';
 
-
-import { Config } from "../../config";
+//models
 import { VacationModel } from "../../models/vacation-model";
+import { PurchaseModel } from "../../models/purchase-model";
+
+//services
+import { errorHandling, isAdmin, isLoggedIn } from "../../services/auth"
+
+
 
 interface PurchaseState {
     purchases: PurchaseModel[];
-    vacations: VacationModel[];
-    // numberOfTickets: number;
-    // totalPrice: number;
+    isLoggedIn: boolean;
 }
 
 export class Purchases extends Component<any, PurchaseState>{
 
     private unsubscribeStore: Unsubscribe;
+    private socket;
 
     public constructor(props: any) {
         super(props);
 
-        let numberOfTickets = 0;
-        let totalPrice = 0;
-
-        //get vacations from the store
+        //get purchases, vacations, and login status from the store
         this.state = {
-            purchases: [],
-            vacations: []
-            // numberOfTickets: 0,
-            // totalPrice: 0,
+            purchases: store.getState().purchases,
+            isLoggedIn: store.getState().isLoggedIn
         };
 
     }
 
 
+    public componentDidMount() {
 
-    public async componentDidMount() {
+        if(!isLoggedIn(this.props)) return;
+        if(!isAdmin(this.props)) return;
 
+        //create connection to the server
+        this.socket = io.connect(Config.serverUrl);
 
         //if is there any changes in the store get the vacations from the new store.
         this.unsubscribeStore = store.subscribe(() => {
-            // const purchases = store.getState().purchases;
-            const vacations = store.getState().vacations;
-            this.setState({ vacations });
-            // this.setState({ purchases });
+
+            const purchases = store.getState().purchases;
+            this.setState({ purchases });
         });
 
-        let vacations = store.getState().vacations;
-        let purchases;
+        this.getComponentDataWithAxios();
 
-        //if there is no token, link to the login page
-        // if (!sessionStorage.getItem("token") || !sessionStorage.getItem("user")) {
-        //     this.props.history.push("/login");
-        //     return;
-        // }
+    }
 
-        //if user is not admin, link to the Home page
-        // else if (!JSON.parse(sessionStorage.getItem("user")).isAdmin) {
-        //     this.props.history.push("/");
-        // }
-
-
+    private getComponentDataWithAxios = async () => {
         try {
 
-            //if the store is not empty, find the vacation for edit and don't use axios at all
-            if (this.state.purchases.length === 0) {
+            //if the store is empty, get vacations and purchases data.
+
+            if (store.getState().vacations.length === 0) {
                 const response = await
-                    axios.get<PurchaseModel[]>(`${Config.serverUrl}/api/purchases`);
-                purchases = response.data;
-            }
-            if (this.state.vacations.length === 0) {
-                const response = await
-                    axios.get<VacationModel[]>(`${Config.serverUrl}/api/vacations`);
-                vacations = response.data;
+                    axiosPrivate.get<VacationModel[]>(`/api/vacations`);
+                const vacations = response.data;
+                store.dispatch({ type: ActionType.SaveAllVacations, payload: vacations });
             }
 
+            if (store.getState().purchases.length === 0) {
+                const response = await
+                    axiosPrivate.get<PurchaseModel[]>(`/api/purchases`);
+                const purchases = response.data;
+
+                purchases.forEach(p => {
+                    p.vacation = store.getState().vacations.find(v => v.vacationId === p.vacationId);
+                });
+
+                store.dispatch({ type: ActionType.saveAllPurchases, payload: purchases });
+            }
         }
 
         catch (err) {
-            console.log(err);
-            // if (err.response.data === "Your login session has expired") {
-            //     sessionStorage.clear();
-            //     alert(err.response.data);
-            //     this.props.history.push("/login");
-            //     return;
-            // }
-
-            // else {
-            //     alert(err);
-            // }
-
+            errorHandling(err, this.props);
         }
-        //     const errors = { ...this.state.errors };
-        this.setState({ vacations });
-
-        purchases.forEach(p => {
-            p.vacation = vacations.find(v => v.vacationId == p.vacationId);
-        });
-        this.setState({ purchases });
-
     }
 
     //disconnect from the server and the store
     public componentWillUnmount(): void {
-        this.unsubscribeStore();
+        this.unsubscribeStore?.();
+        this.socket?.disconnect();
     }
 
 
@@ -141,19 +121,19 @@ export class Purchases extends Component<any, PurchaseState>{
                                 <th>Date</th>
                             </tr>
                         </thead>
-                        {this.state.purchases.map(p =>
-                            <tbody>
-                                <tr>
+                        <tbody>
+                            {this.state.purchases ? this.state.purchases.map(p =>
+
+                                <tr key={p.purchaseId}>
                                     <td>{p.userName}</td>
                                     <td>{p.tickets}</td>
-                                    <td>{p.totalPrice}</td>
+                                    <td>{p.totalPrice}$</td>
                                     <td>{p.vacation.destination}</td>
                                     <td>{new Date(p.date).toDateString()}</td>
-
                                 </tr>
-                            </tbody>
-                        )}
 
+                            ) : ""}
+                        </tbody>
                     </Table>
 
                 </div>

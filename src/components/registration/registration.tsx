@@ -1,8 +1,17 @@
 import React, { Component, ChangeEvent } from "react";
 import "./registration.css";
-import axios from "axios";
+
+//server
+import axios from "../../api/axios";
+
+//models
 import { UserModel } from "../../models/user-model";
+
+//components
 import { NavLink } from "react-router-dom";
+import Button from 'react-bootstrap/Button';
+
+//validation
 import {
     validateAvailableUserName,
     validateUserName,
@@ -12,8 +21,17 @@ import {
     verifyPassword
 }
     from "../../services/user-validation";
-import { Config } from "../../config";
-import Button from 'react-bootstrap/Button';
+
+//store
+import { store } from "../../redux/store";
+import { ActionType } from "../../redux/action-type";
+
+//services
+import { errorHandling } from "../../services/auth"
+import Cookies from 'universal-cookie';
+
+
+
 
 interface UserState {
     user: UserModel;
@@ -37,6 +55,30 @@ export class Registration extends Component<any, UserState>{
             usersNames: [],
             errors: { userNameError: "*", firstNameError: "*", lastNameError: "*", passwordError: "*", verifyPasswordError: "*" }
         };
+    }
+
+    public componentDidMount() {
+        
+        //if the user is logged in, navigate to home page
+        if (store.getState().user) {
+            this.props.history.push("/");
+            return;
+        }
+
+        this.getAllUsersNames();
+    }
+
+    private async getAllUsersNames() {
+        try {
+            const response = await axios.get<UserModel[]>("/api/auth/usersNames");
+            const usersNames = response.data;
+
+            this.setState({ usersNames });
+        }
+
+        catch (err) {
+            errorHandling(err, this.props);
+        }
     }
 
     private setUserName = (args: ChangeEvent<HTMLInputElement>) => {
@@ -124,47 +166,26 @@ export class Registration extends Component<any, UserState>{
     }
 
     private register = async () => {
-
         try {
-            const response = await axios.post(Config.serverUrl + "/api/auth/register",
+            const response = await axios.post("/api/auth/register",
                 this.state.user);
 
-            sessionStorage.setItem("user", JSON.stringify(response.data.user));
-            sessionStorage.setItem("token", response.data.token);
+            store.dispatch({ type: ActionType.saveUser, payload: response.data.user });
+            store.dispatch({ type: ActionType.saveToken, payload: response.data.accessToken });
+
+            const cookies = new Cookies();
+            cookies.set('user', response.data.user, { path: '/' , maxAge: 24 * 60 * 60});
 
             this.props.history.push("/");
         }
 
         catch (err) {
-            alert(err);
+            errorHandling(err, this.props);
         }
 
     }
 
-    public async getAllUsersNames() {
-        try {
-            const response = await axios.get<UserModel[]>(Config.serverUrl + "/api/auth/usersNames");
-            const usersNames = response.data;
-
-            this.setState({ usersNames });
-        }
-
-        catch (err) {
-            alert(err);
-        }
-    }
-
-
-    public componentDidMount() {
-        //if the user is logged in, navigate to home page
-        if (sessionStorage.getItem("token")) {
-            this.props.history.push("/");
-            return;
-        }
-
-        this.getAllUsersNames();
-    }
-
+    
     public render() {
         return (
             <div className="registration">
@@ -173,23 +194,23 @@ export class Registration extends Component<any, UserState>{
                     <form action="">
                         <div className="input-box">
                             <input type="text" name="" id="userBox" placeholder="User Name" onChange={this.setUserName} />
-                            <span className="error">{this.state.errors.userNameError == "*" ? "" : this.state.errors.userNameError}</span>
+                            <span className="error">{this.state.errors.userNameError === "*" ? "" : this.state.errors.userNameError}</span>
                         </div>
                         <div className="input-box">
                             <input type="text" name="" id="userBox" placeholder="First Name" onChange={this.setFirstName} />
-                            <span className="error">{this.state.errors.firstNameError == "*" ? "" : this.state.errors.firstNameError}</span>
+                            <span className="error">{this.state.errors.firstNameError === "*" ? "" : this.state.errors.firstNameError}</span>
                         </div>
                         <div className="input-box">
                             <input type="text" name="" id="userBox" placeholder="Last Name" onChange={this.setLastName} />
-                            <span className="error">{this.state.errors.lastNameError == "*" ? "" : this.state.errors.lastNameError}</span>
+                            <span className="error">{this.state.errors.lastNameError === "*" ? "" : this.state.errors.lastNameError}</span>
                         </div>
                         <div className="input-box">
                             <input type="password" name="" id="userBox" placeholder="Password" onChange={this.setPassword} />
-                            <span className="error">{this.state.errors.passwordError == "*" ? "" : this.state.errors.passwordError}</span>
+                            <span className="error">{this.state.errors.passwordError === "*" ? "" : this.state.errors.passwordError}</span>
                         </div>
                         <div className="input-box">
                             <input type="password" name="" id="userBox" placeholder="Verify Password" onChange={this.verifyPasswordUser} />
-                            <span className="error">{this.state.errors.verifyPasswordError == "*" ? "" : this.state.errors.verifyPasswordError}</span>
+                            <span className="error">{this.state.errors.verifyPasswordError === "*" ? "" : this.state.errors.verifyPasswordError}</span>
                         </div>
                         <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.register}>Sign up</Button>
 

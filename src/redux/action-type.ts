@@ -1,10 +1,15 @@
 export enum ActionType {
     SaveAllVacations,
     SaveAllFollows,
-    PrepareVacationsForUser,
+    saveAllPurchases,
+    saveToken,
+    saveUser,
+    setFollowsPerVacation,
+    sortVacations,
     saveOneVacation,
     addOneVacation,
     deleteOneVacation,
     AddFollow,
-    RemoveFollow
+    RemoveFollow,
+    addPurchase
 }
