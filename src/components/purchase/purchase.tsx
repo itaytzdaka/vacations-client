@@ -151,7 +151,6 @@ export class Purchase extends Component<any, VacationState>{
 
         }
         catch (err) {
-            console.log(err);
             errorHandling(err, this.props);
         }
 

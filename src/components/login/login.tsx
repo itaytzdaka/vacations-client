@@ -43,8 +43,6 @@ export class Login extends Component<any, UserState>{
     }
 
     public componentDidMount() {
-        console.log("login componentDidMount");
-
         //if the user is logged in, navigate to Home page
         if (store.getState().user) {
             this.props.history.push("/");

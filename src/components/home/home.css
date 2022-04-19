@@ -1,10 +1,10 @@
-.vacation{
+.vacation {
     display: inline-block;
     border: solid black 3px;
     margin: 5px;
 }
 
-.card-container{
+.card-container {
     text-align: center;
     display: flex;
     flex-wrap: wrap;
@@ -12,22 +12,52 @@
 }
 
 
-
-
-
-.purchase{
+.purchase {
     background-color: cornflowerblue;
     border-radius: 5px;
     padding: 5px 8px;
     color: rgb(255, 255, 255);
 }
 
-.purchase:hover{
+.purchase:hover {
     background-color: rgb(36, 96, 206);
     color: white;
     text-decoration: none;
 }
 
-.star-fill{
+.star-fill {
     cursor: pointer;
+}
+
+.zoom-effect-container {
+    float: left;
+    position: relative;
+    width: 100%;
+    height: 11rem;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.image-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.image-card img {
+    -webkit-transition: 0.4s ease;
+    transition: 0.4s ease;
+    width: 100%;
+    height: 100%;
+}
+
+.zoom-effect-container:hover .image-card img {
+    -webkit-transform: scale(1.2);
+    transform: scale(1.2);
+}
+
+.card {
+    overflow: hidden;
 }

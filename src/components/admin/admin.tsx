@@ -116,7 +116,11 @@ export class Admin extends Component<any, VacationsState>{
                     {this.state.vacations.map(v =>
 
                         <Card key={v.vacationId}>
-                            <Card.Img variant="top" className="img" src={Config.serverUrl + "/assets/images/vacations/" + v.img} />
+                            <div className="zoom-effect-container">
+                                <div className="image-card">
+                                    <Card.Img variant="top" className="img" src={Config.serverUrl + "/assets/images/vacations/" + v.img} />
+                                </div>
+                            </div>
                             <Card.Body>
                                 <X className="delete" color="black" size={"1.5rem"} onClick={() => this.delete(v.vacationId)} />
                                 <NavLink to={"/admin/" + v.vacationId}>

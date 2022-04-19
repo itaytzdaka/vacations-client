@@ -7,6 +7,7 @@ export class UserModel {
         public userName?: string,
         public password?: string,
         public isAdmin?: boolean,
+        public captchaToken?: string
         ) {
     }
 }

@@ -92,3 +92,12 @@ export function verifyPassword(verifyPassword,password){
     }
     return "";
 }
+
+
+// export function verifyCarpatcha(verifyCarpatcha){
+//     if(verifyCarpatcha===""){
+//         return "Missing carpatcha";
+//     }
+
+//     return "";
+// }

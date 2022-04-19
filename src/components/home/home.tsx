@@ -53,8 +53,8 @@ export class Home extends Component<any, VacationsState>{
 
     public async componentDidMount() {
 
-        if(!isLoggedIn(this.props)) return;
-        
+        if (!isLoggedIn(this.props)) return;
+
         //create connection to the server
         this.socket = io.connect(Config.serverUrl);
 
@@ -72,7 +72,7 @@ export class Home extends Component<any, VacationsState>{
     }
 
     private getComponentData = async () => {
-        
+
         try {
             if (store.getState().vacations.length === 0) {
                 const response = await
@@ -87,13 +87,11 @@ export class Home extends Component<any, VacationsState>{
                 const follows = response.data;
                 store.dispatch({ type: ActionType.SaveAllFollows, payload: follows });
                 store.dispatch({ type: ActionType.setFollowsPerVacation });
-                store.dispatch({ type: ActionType.sortVacations });    
+                store.dispatch({ type: ActionType.sortVacations });
             }
         }
 
         catch (err) {
-            console.log("home err")
-            console.log(err);
             errorHandling(err, this.props);
         }
 
@@ -154,7 +152,11 @@ export class Home extends Component<any, VacationsState>{
 
 
                         <Card key={v.vacationId}>
-                            <Card.Img variant="top" className="img" src={Config.serverUrl + "/assets/images/vacations/" + v.img} />
+                            <div className="zoom-effect-container">
+                                <div className="image-card">
+                                    <Card.Img variant="top" className="img" src={Config.serverUrl + "/assets/images/vacations/" + v.img} />
+                                </div>
+                            </div>
                             <Card.Body>
                                 {v.isFollow ? <StarFill className="star-fill" color="yellow" size={"1.5rem"} onClick={() => this.removeFollow(v.vacationId)} /> : <StarFill className="star-fill" color="grey" size={"1.5rem"} onClick={() => this.addFollow(v.vacationId)} />}
 

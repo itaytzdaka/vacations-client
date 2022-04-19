@@ -3,6 +3,7 @@ import "./registration.css";
 
 //server
 import axios from "../../api/axios";
+import { Config } from "../../config";
 
 //models
 import { UserModel } from "../../models/user-model";
@@ -29,6 +30,7 @@ import { ActionType } from "../../redux/action-type";
 //services
 import { errorHandling } from "../../services/auth"
 import Cookies from 'universal-cookie';
+import ReCAPTCHA from "react-google-recaptcha";
 
 
 
@@ -36,29 +38,35 @@ import Cookies from 'universal-cookie';
 interface UserState {
     user: UserModel;
     usersNames: UserModel[];
+    captchaIsVerified: boolean;
     errors: {
         userNameError: string,
         firstNameError: string,
         lastNameError: string,
         passwordError: string,
+        captcha: string,
         verifyPasswordError: string
     };
-
 }
 
 export class Registration extends Component<any, UserState>{
+
+    private recaptchaRef: ReCAPTCHA;
 
     public constructor(props: any) {
         super(props);
         this.state = {
             user: new UserModel(),
             usersNames: [],
-            errors: { userNameError: "*", firstNameError: "*", lastNameError: "*", passwordError: "*", verifyPasswordError: "*" }
+            captchaIsVerified: false,
+            errors: { userNameError: "*", firstNameError: "*", lastNameError: "*", passwordError: "*", verifyPasswordError: "*", captcha: "" }
         };
+
     }
 
-    public componentDidMount() {
-        
+    public async componentDidMount() {
+        console.log(process.env, "env");
+
         //if the user is logged in, navigate to home page
         if (store.getState().user) {
             this.props.history.push("/");
@@ -66,6 +74,7 @@ export class Registration extends Component<any, UserState>{
         }
 
         this.getAllUsersNames();
+
     }
 
     private async getAllUsersNames() {
@@ -165,16 +174,27 @@ export class Registration extends Component<any, UserState>{
         return true;
     }
 
-    private register = async () => {
+    private register = async (e) => {
         try {
+            e.preventDefault();
+
+            const token = await this.recaptchaRef.executeAsync();
+            console.log(token);
+
+            this.recaptchaRef.reset();
+
+
+            const user = { ...this.state.user };
+            user.captchaToken=token;
+
             const response = await axios.post("/api/auth/register",
-                this.state.user);
+                user, { withCredentials: true });
 
             store.dispatch({ type: ActionType.saveUser, payload: response.data.user });
             store.dispatch({ type: ActionType.saveToken, payload: response.data.accessToken });
 
             const cookies = new Cookies();
-            cookies.set('user', response.data.user, { path: '/' , maxAge: 24 * 60 * 60});
+            cookies.set('user', response.data.user, { path: '/', maxAge: 24 * 60 * 60 });
 
             this.props.history.push("/");
         }
@@ -185,9 +205,10 @@ export class Registration extends Component<any, UserState>{
 
     }
 
-    
+
     public render() {
         return (
+
             <div className="registration">
                 <div className="card-registration">
                     <h1>Sign up</h1>
@@ -212,6 +233,12 @@ export class Registration extends Component<any, UserState>{
                             <input type="password" name="" id="userBox" placeholder="Verify Password" onChange={this.verifyPasswordUser} />
                             <span className="error">{this.state.errors.verifyPasswordError === "*" ? "" : this.state.errors.verifyPasswordError}</span>
                         </div>
+                        <ReCAPTCHA
+                            sitekey={process.env.REACT_APP_CAPTCHA_SITE_KEY}
+                            size="invisible"
+                            ref={domObject => this.recaptchaRef = domObject}
+                        />
+
                         <Button variant="primary" type="submit" disabled={!this.isFormLegal()} onClick={this.register}>Sign up</Button>
 
                     </form>

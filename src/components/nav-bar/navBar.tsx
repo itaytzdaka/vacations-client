@@ -59,7 +59,7 @@ class NavBar extends Component<any, userState>{
 
                         }
                         <div className="user">
-                            <div> Hello {this.state.user?.userName} </div>
+                            <div> Hello {this.state.user?.firstName} </div>
 
                             <div>
                                 <Button onClick={this.logOut}>Log out</Button>
