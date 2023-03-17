@@ -16,7 +16,7 @@ import NavBar from "../nav-bar/navBar";
 
 //server
 import io from "socket.io-client";
-import axiosPrivate from "../../api/axios";
+import {axiosPrivate} from "../../api/axios";
 import { Config } from "../../config";
 
 //services

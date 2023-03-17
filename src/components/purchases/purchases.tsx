@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import "./purchases.css";
 
 //server
-import axiosPrivate from "../../api/axios";
+import {axiosPrivate} from "../../api/axios";
 import io from "socket.io-client";
 import { Config } from "../../config";
 

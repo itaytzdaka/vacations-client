@@ -2,7 +2,8 @@ import React, { Component, ChangeEvent } from "react";
 import "./login.css";
 
 //server
-import axios from "../../api/axios";
+// import axios from "../../api/axios";
+import {axiosPrivate} from "../../api/axios";
 
 //models
 import { UserModel } from "../../models/user-model";
@@ -94,7 +95,7 @@ export class Login extends Component<any, UserState>{
 
         try {
             e.preventDefault();
-            const response = await axios.post("/api/auth/login",
+            const response = await axiosPrivate.post("/api/auth/login",
                 this.state.user, { withCredentials: true });
 
             store.dispatch({ type: ActionType.saveUser, payload: response.data.user });

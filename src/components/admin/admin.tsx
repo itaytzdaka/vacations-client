@@ -5,7 +5,7 @@ import "./admin.css";
 import { VacationModel } from "../../models/vacation-model";
 
 //server
-import axiosPrivate from "../../api/axios";
+import {axiosPrivate} from "../../api/axios";
 import io from "socket.io-client";
 import { Config } from "../../config";
 

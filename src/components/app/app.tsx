@@ -19,7 +19,7 @@ import { store } from "../../redux/store";
 import { ActionType } from "../../redux/action-type";
 
 //server
-import axiosPrivate from "../../api/axios";
+import {axiosPrivate} from "../../api/axios";
 import axios from "../../api/axios";
 import { Config } from "../../config";
 import io from "socket.io-client";
@@ -31,16 +31,17 @@ import { PurchaseModel } from "../../models/purchase-model";
 
 export class App extends Component<any>{
 
-    private socket;
-    private axiosPrivate = axiosPrivate;
+    private socket;    
 
     public constructor(props: any) {
         super(props);
 
-        if(this.axiosPrivate.interceptors.request["handlers"].length===0){
-            this.axiosPrivate.interceptors.request.use(this.reqInterceptor);
-            this.axiosPrivate.interceptors.response.use(this.resInterceptor,this.resErrInterceptor);
+        
+        if(axiosPrivate.interceptors.request["handlers"].length===0){
+            axiosPrivate.interceptors.request.use(this.reqInterceptor);
+            axiosPrivate.interceptors.response.use(this.resInterceptor,this.resErrInterceptor);
         }
+
     }
 
 
@@ -48,15 +49,26 @@ export class App extends Component<any>{
 
         if (!req.headers['authorization']) {
             req.headers["authorization"] = `Bearer ${store.getState().token}`;
+            
         }
-        // console.log("req");
-        // console.log(req);
+
+        // console.log("req.headers[authorization]");
+        // console.log(req.headers["authorization"]);
+
+        // if (!req.headers['Content-Type']) {
+        //     req.headers["Content-Type"] = `multipart/form-data`; 
+        // }
+
+        console.log("req headers before: ");
+        console.log(req.headers);
+        console.log("req before: ");
+        console.log(req);
         return req;
     }
 
     private resInterceptor = res => {
-        // console.log("res");
-        // console.log(res);
+        console.log("res");
+        console.log(res);
         return res;
     }
 
@@ -79,7 +91,7 @@ export class App extends Component<any>{
             // prevRequest.sent = true;
             try {
                 console.log("refresh");
-                const response = await axiosPrivate.get("/api/auth/refresh", { withCredentials: true });
+                const response = await axiosPrivate.get("/api/auth/refresh");
                 console.log("after refresh");
                 const newAccessToken = response.data.accessToken;
                 store.dispatch({ type: ActionType.saveToken, payload: newAccessToken });

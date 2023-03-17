@@ -6,7 +6,7 @@ import { VacationModel } from "../../models/vacation-model";
 import { FollowModel } from "../../models/follow-model";
 
 //server
-import axiosPrivate from "../../api/axios";
+import {axiosPrivate} from "../../api/axios";
 import io from "socket.io-client";
 import { Config } from "../../config";
 

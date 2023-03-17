@@ -2,7 +2,8 @@ import React, { Component, ChangeEvent } from "react";
 import "./addVacation.css";
 
 //server
-import axiosPrivate from "../../api/axios";
+import {axiosPrivate} from "../../api/axios";
+import axios from "../../api/axios";
 import io from "socket.io-client";
 import { Config } from "../../config";
 
@@ -35,7 +36,7 @@ import { errorHandling, isLoggedIn, isAdmin, } from "../../services/auth"
 interface VacationState {
     vacation: VacationModel;
     isLoggedIn: boolean;
-    file: any;
+    file: File;
     errors: {
         descriptionError: string,
         destinationError: string,
@@ -108,6 +109,8 @@ export class AddVacation extends Component<any, VacationState>{
 
     private onFileChange = (args: ChangeEvent<HTMLInputElement>) => {
         const file = args.target.files[0];
+        console.log("File: ");
+        console.log(file);
         if (file) {
             this.setImgUrl(file.name);
             this.setState({ file });
@@ -194,6 +197,9 @@ export class AddVacation extends Component<any, VacationState>{
 
         const vacation = { ...this.state.vacation };
 
+        console.log("this.state.file");
+        console.log(this.state.file);
+
         const formData = new FormData();
         formData.append(
 
@@ -201,10 +207,16 @@ export class AddVacation extends Component<any, VacationState>{
             this.state.file
         );
 
+        // formData.append('image', this.state.file, this.state.file.name);
+
         try {
 
             //upload vacation image
-            await axiosPrivate.post("/upload-image", formData);
+            await axiosPrivate.post<File>("/upload-image", formData, {
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                },
+              });
 
             //add vacation
             const response = await axiosPrivate.post<VacationModel>("/api/vacations",
