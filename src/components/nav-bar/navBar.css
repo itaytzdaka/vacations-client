@@ -1,4 +1,4 @@
-.nav-container{
+.nav-container {
     background-color: #007bff;
     color: white;
     position: fixed;
@@ -6,13 +6,13 @@
     z-index: 2;
 }
 
-.space{
+.space {
     height: 5vh;
     margin-bottom: 15px;
 }
 
 
-nav{
+nav {
     width: 90%;
     margin: auto;
     display: flex;
@@ -22,74 +22,58 @@ nav{
 
 }
 
-nav ul{
+nav ul {
     display: flex;
     align-items: inherit;
     margin: 0;
-    /* flex: 1; */
     justify-content: space-between;
 }
 
-ul li{
+ul li {
     list-style: none;
     flex-shrink: 0;
     margin-right: 10%;
 }
 
-.user{
+.user {
     display: flex;
     align-items: inherit;
     justify-content: flex-end;
-    /* flex: 1.7; */
 }
 
-.user div{
+.user div {
     flex-shrink: 0;
 }
 
-/* .left a{
-    color: white;
-    text-decoration: none;
-}*/
-
-.nav-container a, .nav-container a:hover{
+.nav-container a,
+.nav-container a:hover {
     color: white !important;
     text-decoration: none;
 }
 
-/* .right{
-    float: right;
-    margin-right: 50px;
-} */
-
-
-  /* from 1023px to 1200px */
-  @media only screen and (max-width: 1200px) {
-    .user{
+/* from 1023px to 1200px */
+@media only screen and (max-width: 1200px) {
+    .user {
         flex: 1.3;
     }
-  }
-  
-  /* from 767px to 1023px */
-  @media only screen and (max-width: 1023px) {
-    .user{
+}
+
+/* from 767px to 1023px */
+@media only screen and (max-width: 1023px) {
+    .user {
         flex: 0.8;
     }
-  }
-  
-  /* from 520px to 767px */
-  @media only screen and (max-width: 767px) {
-    .user{
+}
+
+/* from 520px to 767px */
+@media only screen and (max-width: 767px) {
+    .user {
         flex: 0.5;
     }
 
-  }
-  
-  /* up to 520px */
-  @media only screen and (max-width: 520px) {
+}
 
-  }
+/* up to 520px */
+@media only screen and (max-width: 520px) {}
 
-  @media only screen and (max-width: 480px) {
-
-  }
+@media only screen and (max-width: 480px) {}

@@ -3,7 +3,6 @@ import "./registration.css";
 
 //server
 import axios from "../../api/axios";
-import { Config } from "../../config";
 
 //models
 import { UserModel } from "../../models/user-model";

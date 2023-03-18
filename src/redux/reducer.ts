@@ -49,7 +49,6 @@ export function reduce(oldAppState: AppState, action: Action): AppState {
             break;
 
         case ActionType.deleteOneVacation:
-            // for(let i in newAppState.vacations){
             newAppState.vacations = newAppState.vacations.filter(v => v.vacationId !== action.payload );
             break;
 
@@ -58,7 +57,6 @@ export function reduce(oldAppState: AppState, action: Action): AppState {
             break;
 
         case ActionType.RemoveFollow:
-            // for(let i in newAppState.vacations){
             newAppState.follows = newAppState.follows.filter(f =>  f.followId !== action.payload );
             break;
 

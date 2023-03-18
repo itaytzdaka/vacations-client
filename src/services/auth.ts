@@ -1,4 +1,3 @@
-// import axios, { AxiosError } from "axios";
 import { AxiosError } from "axios";
 import axios from "../api/axios";
 import privateAxios from "../api/axios";

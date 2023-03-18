@@ -35,75 +35,40 @@ export class App extends Component<any>{
 
     public constructor(props: any) {
         super(props);
-
         
         if(axiosPrivate.interceptors.request["handlers"].length===0){
             axiosPrivate.interceptors.request.use(this.reqInterceptor);
             axiosPrivate.interceptors.response.use(this.resInterceptor,this.resErrInterceptor);
         }
-
     }
 
-
+    //save token in the req header.
     private reqInterceptor = req => {
-
         if (!req.headers['authorization']) {
             req.headers["authorization"] = `Bearer ${store.getState().token}`;
-            
         }
-
-        // console.log("req.headers[authorization]");
-        // console.log(req.headers["authorization"]);
-
-        // if (!req.headers['Content-Type']) {
-        //     req.headers["Content-Type"] = `multipart/form-data`; 
-        // }
-
-        console.log("req headers before: ");
-        console.log(req.headers);
-        console.log("req before: ");
-        console.log(req);
         return req;
     }
 
     private resInterceptor = res => {
-        console.log("res");
-        console.log(res);
         return res;
     }
 
+    //in case of an error in the response
     private resErrInterceptor = async err => {
-        // console.log("response err");
-        // console.log(err);
-        // console.log("err?.response?.data");
-        // console.log(err?.response?.data);
-        // console.log("err?.config = req");
-        console.log(err?.config);
-        console.log(err?.config.url);
-
-
+        
         const prevRequest = err?.config;
-        // console.log("err?.response?.status");
-        // console.log(err?.response?.status);
-        // if(err?.response?.status === 403 || 401 && !prevRequest?.sent){
+        
+        //if response with an Error of login session, try to get a new token from server.
         if (err?.config.url!=="/api/auth/refresh" && (err?.response?.data === "You are not logged-in" || err?.response?.data === "Your login session has expired")) {
-            //try to get access token
-            // prevRequest.sent = true;
+        
             try {
-                console.log("refresh");
                 const response = await axiosPrivate.get("/api/auth/refresh");
-                console.log("after refresh");
                 const newAccessToken = response.data.accessToken;
                 store.dispatch({ type: ActionType.saveToken, payload: newAccessToken });
                 prevRequest.headers["authorization"] = `Bearer ${newAccessToken}`;
                 return axios(prevRequest);
             } catch (error) {
-                // console.log("req error");
-                // console.log(err);
-                // console.log(err?.response?.data);
-                // console.log("refresh error");
-                // console.log(error);
-                // console.log(error?.response?.data);
                 throw error;
             }
 

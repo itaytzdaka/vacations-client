@@ -3,11 +3,6 @@
     background-image: linear-gradient(180deg, rgb(185, 21, 122),rgb(0, 18, 180));
     text-align: center;
 }
-.card-registration{
-    /* display: block !important;
-    margin: auto; */
-    
-}
 
 .card-registration>h1{
     margin-bottom: 20px;
@@ -31,7 +26,6 @@
     font-size: 0.8rem;
     position: absolute;
     color: red !important;
-    /* transform: translate(-50%,0); */
 }
 
 .input-box{
